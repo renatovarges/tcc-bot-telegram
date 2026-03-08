@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
 """
 Bot Telegram - Transcrição e Legendagem de Áudios
-Compatível com Python 3.14+ no Render
+Compatível com Render Free (inclui servidor HTTP para health check)
 """
 
 import os
 import logging
 import io
 import asyncio
+import threading
+from http.server import HTTPServer, BaseHTTPRequestHandler
 import httpx
 from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler, filters, ContextTypes
@@ -21,10 +23,9 @@ logger = logging.getLogger(__name__)
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 ALLOWED_USER_ID = int(os.getenv('ALLOWED_USER_ID', '0'))
+PORT = int(os.getenv('PORT', '10000'))
 
 SYSTEM_PROMPT = """Você é um especialista em legendagem de áudios para grupos de análise técnica de futebol.
-
-Diretrizes de Legenda para Telegram:
 
 Formato Obrigatório:
 - Começar sempre com: 🎙 TÍTULO EM CAIXA ALTA (resumindo o tema do áudio)
@@ -66,6 +67,26 @@ Missão Final:
 - USAR CAIXA ALTA, ITÁLICO E NEGRITO À VONTADE PARA DESTAQUES"""
 
 
+# ── Servidor HTTP para satisfazer o health check do Render ──────────────────
+
+class HealthHandler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.end_headers()
+        self.wfile.write(b"Bot TCC Legendas rodando!")
+
+    def log_message(self, format, *args):
+        pass  # Silencia logs do servidor HTTP
+
+
+def start_health_server():
+    server = HTTPServer(('0.0.0.0', PORT), HealthHandler)
+    logger.info(f"Servidor HTTP rodando na porta {PORT}")
+    server.serve_forever()
+
+
+# ── Funções de transcrição e legendagem ─────────────────────────────────────
+
 def transcribe_audio(audio_bytes: bytes, filename: str = "audio.ogg") -> str:
     audio_io = io.BytesIO(audio_bytes)
     with httpx.Client(timeout=120.0) as client:
@@ -101,6 +122,8 @@ def generate_legend(transcript: str) -> str:
         return response.json()["choices"][0]["message"]["content"]
 
 
+# ── Handlers do Telegram ─────────────────────────────────────────────────────
+
 async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if update.message.from_user.id != ALLOWED_USER_ID:
         await update.message.reply_text("❌ Sem permissão.")
@@ -128,7 +151,7 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         logger.info(f"Legenda: {len(legend)} chars")
 
         await processing_msg.edit_text(legend)
-        logger.info("Concluído.")
+        logger.info("Concluído com sucesso.")
 
     except httpx.HTTPStatusError as e:
         logger.error(f"Erro OpenAI: {e.response.status_code} - {e.response.text}")
@@ -154,6 +177,8 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     )
 
 
+# ── Inicialização ─────────────────────────────────────────────────────────────
+
 async def run_bot():
     if not TELEGRAM_BOT_TOKEN:
         raise ValueError("TELEGRAM_BOT_TOKEN não configurado")
@@ -169,15 +194,18 @@ async def run_bot():
     app.add_handler(MessageHandler(filters.VOICE, process_audio_message))
     app.add_handler(MessageHandler(filters.AUDIO, process_audio_message))
 
-    logger.info("Bot rodando... aguardando mensagens.")
-
     await app.initialize()
     await app.start()
     await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
 
-    # Mantém o bot rodando indefinidamente
+    logger.info("Bot rodando... aguardando mensagens.")
     await asyncio.Event().wait()
 
 
 if __name__ == '__main__':
+    # Inicia o servidor HTTP em thread separada (para o Render não matar o processo)
+    health_thread = threading.Thread(target=start_health_server, daemon=True)
+    health_thread.start()
+
+    # Inicia o bot
     asyncio.run(run_bot())
