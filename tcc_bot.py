@@ -2,6 +2,7 @@
 """
 Bot Telegram - Transcrição e Legendagem de Áudios
 Compatível com Render Free (inclui servidor HTTP para health check)
+Usa HTML parse_mode para formatação confiável
 """
 
 import os
@@ -29,31 +30,28 @@ SYSTEM_PROMPT = """Você é o próprio analista. Não é um assistente resumindo
 
 Sua tarefa: transformar a transcrição em uma legenda que preserve com fidelidade absoluta o raciocínio, os dados, o tom e as conclusões ditas no áudio. Não é um resumo genérico. É uma legenda que captura a essência exata do que foi falado.
 
-## FORMATAÇÃO VISUAL (Markdown do Telegram — use com criatividade e ousadia)
+## FORMATAÇÃO VISUAL (HTML do Telegram — use com criatividade e ousadia)
 
-TÍTULOS DE SEÇÃO: sempre em **_NEGRITO + ITÁLICO + CAIXA ALTA_** (asteriscos duplos + underscore: **_TEXTO_**)
-Exemplo: **_🔥 DESTAQUES DA RODADA_**
-
-NO CORPO DO TEXTO:
-- **negrito** para nomes de jogadores em destaque, números-chave e afirmações centrais
-- _itálico_ para ressalvas, cautelas, opiniões fortes e frases de impacto
-- **_negrito + itálico combinados_** para os momentos de maior ênfase do analista
+O Telegram aceita HTML. Use as tags abaixo:
+- <b>negrito</b> para nomes de jogadores em destaque, números-chave e afirmações centrais
+- <i>itálico</i> para ressalvas, cautelas, opiniões fortes e frases de impacto
+- <b><i>negrito + itálico</i></b> para títulos de seção e momentos de maior ênfase
 - CAIXA ALTA dentro do texto quando o analista dá ênfase verbal a algo
 - Emojis funcionais e contextuais, não decorativos
-- Alterne entre parágrafos corridos e bullets conforme o ritmo do áudio
+- Alterne entre parágrafos corridos e listas conforme o ritmo do áudio
 - Seja generoso com a formatação: a legenda deve ser visualmente rica e dinâmica
 
-Estrutura:
-🎙 **TÍTULO PRINCIPAL EM CAIXA ALTA**
+Estrutura obrigatória:
+🎙 <b>TÍTULO PRINCIPAL EM CAIXA ALTA</b>
 
-**_📊 NOME DA SEÇÃO EM CAIXA ALTA_**
-[conteúdo da seção com negrito, itálico e combinações]
+<b><i>📊 NOME DA SEÇÃO EM CAIXA ALTA</i></b>
+[conteúdo da seção — use <b>negrito</b>, <i>itálico</i> e <b><i>combinações</i></b> livremente]
 
 ## FIDELIDADE OBRIGATÓRIA
 
 - Preserve TODOS os números, percentuais, médias e comparações ditos
 - Preserve o raciocínio exato do analista, inclusive quando ele questiona ou contraria o mercado
-- Preserve o tom: se o analista está cautéloso, a legenda é cautelosa; se está confiante, é confiante
+- Preserve o tom: se o analista está cauteloso, a legenda é cautelosa; se está confiante, é confiante
 - Preserve as ressalvas e alertas com o mesmo peso dado no áudio
 - Mantenha os nomes dos jogadores exatamente como mencionados
 - Se o analista der uma opinião forte ou contrária ao senso comum, isso deve aparecer com destaque
@@ -66,6 +64,7 @@ Estrutura:
 - Não usar: "Em resumo", "Portanto", "Conclusão", "Vale lembrar", "Como já falamos"
 - Não usar linguagem genérica de IA
 - Não adicionar hashtags
+- Não usar Markdown (asteriscos, underscores) — APENAS tags HTML
 
 ## MISSÃO FINAL
 
@@ -82,7 +81,7 @@ class HealthHandler(BaseHTTPRequestHandler):
         self.wfile.write(b"Bot TCC Legendas rodando!")
 
     def log_message(self, format, *args):
-        pass  # Silencia logs do servidor HTTP
+        pass
 
 
 def start_health_server():
@@ -134,7 +133,7 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
     user_id = update.message.from_user.id
     logger.info(f"Mensagem recebida de user_id={user_id}")
     if user_id != ALLOWED_USER_ID:
-        await update.message.reply_text(f"❌ Sem permissão. Seu ID é: {user_id}")
+        await update.message.reply_text(f"❌ Sem permissão.")
         return
 
     try:
@@ -158,7 +157,8 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         legend = generate_legend(transcript)
         logger.info(f"Legenda: {len(legend)} chars")
 
-        await processing_msg.edit_text(legend, parse_mode='Markdown')
+        # Usa HTML para formatação confiável (negrito + itálico combinados funcionam)
+        await processing_msg.edit_text(legend, parse_mode='HTML')
         logger.info("Concluído com sucesso.")
 
     except httpx.HTTPStatusError as e:
@@ -176,7 +176,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     logger.info(f"Comando /start de user_id={user_id}")
     if user_id != ALLOWED_USER_ID:
-        await update.message.reply_text(f"❌ Sem permissão. Seu ID é: {user_id}")
+        await update.message.reply_text("❌ Sem permissão.")
         return
     await update.message.reply_text(
         "🎙 Bot de Legendagem TCC Ativado!\n\n"
