@@ -125,8 +125,10 @@ def generate_legend(transcript: str) -> str:
 # ── Handlers do Telegram ─────────────────────────────────────────────────────
 
 async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.message.from_user.id != ALLOWED_USER_ID:
-        await update.message.reply_text("❌ Sem permissão.")
+    user_id = update.message.from_user.id
+    logger.info(f"Mensagem recebida de user_id={user_id}")
+    if user_id != ALLOWED_USER_ID:
+        await update.message.reply_text(f"❌ Sem permissão. Seu ID é: {user_id}")
         return
 
     try:
@@ -165,8 +167,10 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    if update.message.from_user.id != ALLOWED_USER_ID:
-        await update.message.reply_text("❌ Sem permissão.")
+    user_id = update.message.from_user.id
+    logger.info(f"Comando /start de user_id={user_id}")
+    if user_id != ALLOWED_USER_ID:
+        await update.message.reply_text(f"❌ Sem permissão. Seu ID é: {user_id}")
         return
     await update.message.reply_text(
         "🎙 Bot de Legendagem TCC Ativado!\n\n"
