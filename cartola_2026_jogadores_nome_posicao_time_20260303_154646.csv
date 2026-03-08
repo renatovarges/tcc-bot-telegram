@@ -1,0 +1,706 @@
+﻿atleta_id,nome,apelido,posicao,posicao_abreviacao,time,time_abreviacao,clube_id,posicao_id,status_id,preco_num,jogos_num,media_num
+102561,Gonzalo Mathías Mastriani Borges,Mastriani,Atacante,ata,Athlético-PR,CAP,293,5,6,4.0,0,0.0
+122439,Isaac Rodrigues de Lima,Isaac,Atacante,ata,Athlético-PR,CAP,293,5,6,2.0,0,0.0
+90031,John Stiven Mendoza Valencia,Mendoza,Atacante,ata,Athlético-PR,CAP,293,5,6,7.42,3,4.47
+102796,Julimar Silva Oliveira Júnior,Julimar,Atacante,ata,Athlético-PR,CAP,293,5,6,7.9,3,8.0
+143193,Kevin Stiven Viveros Rodallega,Viveros,Atacante,ata,Athlético-PR,CAP,293,5,6,11.23,3,9.27
+123101,Leonardo Caetano Silva,Leozinho,Atacante,ata,Athlético-PR,CAP,293,5,6,2.56,1,-0.3
+105518,Renan Peixoto Nepomuceno,Renan Peixoto,Atacante,ata,Athlético-PR,CAP,293,5,6,4.0,0,0.0
+115266,Renan Rodrigues Fonseca Viana,Renan Viana,Atacante,ata,Athlético-PR,CAP,293,5,6,2.0,0,0.0
+69012,Aderbar Melo dos Santos Neto,Santos,Goleiro,gol,Athlético-PR,CAP,293,1,6,9.75,3,5.77
+143532,Carlos Eduardo Souza de Barros,Carlos Eduardo,Goleiro,gol,Athlético-PR,CAP,293,1,6,1.0,0,0.0
+130842,Matheus Soares Rocha,Matheus Soares,Goleiro,gol,Athlético-PR,CAP,293,1,6,1.0,0,0.0
+110698,Mycael Pontes Moreira,Mycael,Goleiro,gol,Athlético-PR,CAP,293,1,6,5.0,0,0.0
+113113,Gastón Américo Benavídez,Benavídez,Lateral,lat,Athlético-PR,CAP,293,2,6,6.85,3,5.1
+146374,Gilberto Junior Leite dos Santos,Gilberto,Lateral,lat,Athlético-PR,CAP,293,2,6,2.0,0,0.0
+122316,João Vitor Vigolo Gomes,Batata,Lateral,lat,Athlético-PR,CAP,293,2,6,1.0,0,0.0
+120433,Leonardo Derik Dias Gonçalves,Léo Derik,Lateral,lat,Athlético-PR,CAP,293,2,6,4.37,2,5.0
+110668,Lucas Ángel Esquivel,Esquivel,Lateral,lat,Athlético-PR,CAP,293,2,6,5.53,2,4.05
+128427,Alejandro García Castillo,Alejandro García,Meia,mei,Athlético-PR,CAP,293,4,6,4.0,0,0.0
+112017,Antonio Feliphe Costa Silva,Felipinho,Meia,mei,Athlético-PR,CAP,293,4,6,4.0,0,0.0
+147194,Bruno Braga Ramos,Bruninho,Meia,mei,Athlético-PR,CAP,293,4,6,2.57,1,0.0
+125926,Bruno Zapelli,Zapelli,Meia,mei,Athlético-PR,CAP,293,4,6,5.85,3,2.97
+130906,Diogo Riquelme Rivas do Nascimento,Riquelme,Meia,mei,Athlético-PR,CAP,293,4,6,0.71,1,-0.3
+125746,Eduardo Kogitzki Anastacio,Dudu,Meia,mei,Athlético-PR,CAP,293,4,6,0.75,3,0.17
+127970,Felipe Chiqueti Bandeira,Felipe Chiqueti,Meia,mei,Athlético-PR,CAP,293,4,6,1.94,2,1.95
+80129,Jadson Alves dos Santos,Jadson,Meia,mei,Athlético-PR,CAP,293,4,6,5.03,2,1.25
+128431,João Victor Machado Cruz,João Cruz,Meia,mei,Athlético-PR,CAP,293,4,6,5.06,1,1.6
+131832,Juan Camilo Portilla Orozco,Portilla,Meia,mei,Athlético-PR,CAP,293,4,6,2.85,3,-0.37
+71536,Luiz Gustavo Dias,Luiz Gustavo,Meia,mei,Athlético-PR,CAP,293,4,6,5.36,2,1.25
+145609,Élan Joshep Ricardo Ochoa,Élan Ricardo,Meia,mei,Athlético-PR,CAP,293,4,6,3.0,0,0.0
+92273,Odair Hellmann,Odair Hellmann,Técnico,tec,Athlético-PR,CAP,293,6,6,7.59,3,5.8
+130843,Arthur dos Santos Barbosa Dias,Arthur Dias,Zagueiro,zag,Athlético-PR,CAP,293,3,6,5.3,3,4.33
+107985,Carlos Terán Díaz,Terán,Zagueiro,zag,Athlético-PR,CAP,293,3,6,5.37,3,3.3
+115270,Habraão Lincon do Nascimento Saraiva,Habraão,Zagueiro,zag,Athlético-PR,CAP,293,3,6,3.0,0,0.0
+123869,Juan Felipe Aguirre Tabares,Aguirre,Zagueiro,zag,Athlético-PR,CAP,293,3,6,5.39,2,3.95
+85626,Leonardo Pinheiro da Conceição,Léo,Zagueiro,zag,Athlético-PR,CAP,293,3,6,5.74,1,4.7
+128429,Marcos André Paulino Maia,Marcão,Zagueiro,zag,Athlético-PR,CAP,293,3,6,3.0,0,0.0
+114040,Alan Steve Minda García,Minda,Atacante,ata,Atlético-MG,CAM,282,5,6,8.59,1,1.5
+68920,Eduardo Pereira Rodrigues,Dudu,Atacante,ata,Atlético-MG,CAM,282,5,2,7.99,4,4.17
+39148,Givanildo Vieira de Souza,Hulk,Atacante,ata,Atlético-MG,CAM,282,5,7,14.25,4,6.93
+101002,José Antonio dos Santos Júnior,Júnior Santos,Atacante,ata,Atlético-MG,CAM,282,5,6,5.0,0,0.0
+98909,Tomás Esteban Cuello,Cuello,Atacante,ata,Atlético-MG,CAM,282,5,2,8.38,4,5.43
+95362,Zander Mateo Casierra Cabezas,Cassierra,Atacante,ata,Atlético-MG,CAM,282,5,6,9.21,1,0.8
+72294,Everson Felipe Marques Pires,Everson,Goleiro,gol,Atlético-MG,CAM,282,1,7,10.28,4,4.57
+115674,Gabriel Delfim Ferreira,Gabriel Delfim,Goleiro,gol,Atlético-MG,CAM,282,1,6,2.0,0,0.0
+141126,Pedro Cobra Rodrigues,Pedro Cobra,Goleiro,gol,Atlético-MG,CAM,282,1,6,1.0,0,0.0
+147090,Kauã Pascini Resende,Kauã Pascini,Lateral,lat,Atlético-MG,CAM,282,2,6,1.0,0,0.0
+107554,Natanael Moreira Milouski,Natanael,Lateral,lat,Atlético-MG,CAM,282,2,3,5.16,1,-2.8
+96591,Renan Augusto Lodi dos Santos,Renan Lodi,Lateral,lat,Atlético-MG,CAM,282,2,7,10.0,4,4.07
+106302,Ángelo Smit Preciado Quiñónez,Preciado,Lateral,lat,Atlético-MG,CAM,282,2,7,6.44,2,0.95
+39656,Alan Steven Franco Palma,Alan Franco,Meia,mei,Atlético-MG,CAM,282,4,7,5.72,4,2.17
+118774,Alexsander Cristhian Gomes da Costa - Christian,Alexsander,Meia,mei,Atlético-MG,CAM,282,4,5,7.14,1,1.7
+72460,Bernard Anício Caldeira Duarte,Bernard,Meia,mei,Atlético-MG,CAM,282,4,6,4.12,3,0.8
+87999,Gustavo Henrique Furtado Scarpa,Gustavo Scarpa,Meia,mei,Atlético-MG,CAM,282,4,7,6.97,4,2.3
+141551,Hendel dos Santos Nascimento,Índio,Meia,mei,Atlético-MG,CAM,282,4,6,1.0,0,0.0
+100084,Igor Silveira Gomes,Igor Gomes,Meia,mei,Atlético-MG,CAM,282,4,6,5.03,3,0.07
+147088,Mamady Cissé,Cissé,Meia,mei,Atlético-MG,CAM,282,4,6,1.72,2,1.65
+141139,Mateus José Iseppe,Mateus Iseppe,Meia,mei,Atlético-MG,CAM,282,4,6,2.0,0,0.0
+94154,Maycon de Andrade Barberan,Maycon,Meia,mei,Atlético-MG,CAM,282,4,7,5.9,4,2.4
+122990,Patrick Roberto da Silva Campos,Patrick,Meia,mei,Atlético-MG,CAM,282,4,6,4.0,0,0.0
+105068,Reinier Jesus Carvalho,Reinier,Meia,mei,Atlético-MG,CAM,282,4,6,3.54,4,1.72
+126189,Tomás Pérez,Tomás Pérez,Meia,mei,Atlético-MG,CAM,282,4,6,5.0,0,0.0
+116034,Victor Hugo Gomes Silva,Victor Hugo,Meia,mei,Atlético-MG,CAM,282,4,7,8.13,4,6.63
+92747,Eduardo Rodrigo Domínguez,Eduardo Domínguez,Técnico,tec,Atlético-MG,CAM,282,6,7,9.46,0,0.0
+124661,Ivan Ramiro Román Hurtado,Iván Román,Zagueiro,zag,Atlético-MG,CAM,282,3,6,5.0,0,0.0
+88312,Júnior Osmar Ignacio Alonso Mujica,Junior Alonso,Zagueiro,zag,Atlético-MG,CAM,282,3,7,5.79,3,3.0
+92087,Lyanco Evangelista Silveira Neves Vojnovic,Lyanco,Zagueiro,zag,Atlético-MG,CAM,282,3,5,9.0,0,0.0
+100842,Ruan Tressoldi Netto,Ruan,Zagueiro,zag,Atlético-MG,CAM,282,3,7,4.82,4,2.5
+141131,Vitor Fernandes Chaves Teixeira,Vitão,Zagueiro,zag,Atlético-MG,CAM,282,3,6,1.0,0,0.0
+72605,Vitor Hugo Franchescoli de Souza,Vitor Hugo,Zagueiro,zag,Atlético-MG,CAM,282,3,6,7.0,1,2.0
+101314,Ademir da Silva Santos Júnior,Ademir,Atacante,ata,Bahia,BAH,265,5,7,7.76,3,3.83
+113397,Cristian Gonzalo Olivera Ibarra,Cristian Olivera,Atacante,ata,Bahia,BAH,265,5,2,7.81,3,6.2
+109401,Erick da Costa Farias,Erick Pulga,Atacante,ata,Bahia,BAH,265,5,2,8.09,3,2.5
+78117,Everaldo Stum,Everaldo,Atacante,ata,Bahia,BAH,265,5,2,4.62,2,1.8
+145379,Kauê Junior Furquim da Silva,Kauê Furquim,Atacante,ata,Bahia,BAH,265,5,6,2.0,0,0.0
+136955,Mateo Naín Sanabria Doracio,Sanabria,Atacante,ata,Bahia,BAH,265,5,2,7.55,1,6.8
+129663,Ruan Pablo Barbosa Sousa,Ruan Pablo,Atacante,ata,Bahia,BAH,265,5,5,2.0,0,0.0
+142265,Wendeson Wanderley Santos de Melo,Dell,Atacante,ata,Bahia,BAH,265,5,6,1.88,2,0.75
+68996,Willian José da Silva,Willian José,Atacante,ata,Bahia,BAH,265,5,7,10.09,3,3.23
+85425,João Paulo Silva Martins,João Paulo,Goleiro,gol,Bahia,BAH,265,1,6,6.0,0,0.0
+91101,Ronaldo de Oliveira Strada,Ronaldo,Goleiro,gol,Bahia,BAH,265,1,7,7.68,3,5.43
+122994,Victor dos Santos Nascimento,Victor Nascimento,Goleiro,gol,Bahia,BAH,265,1,6,1.0,0,0.0
+80313,Gilberto Moraes Júnior,Gilberto,Lateral,lat,Bahia,BAH,265,2,5,7.31,2,4.1
+97868,Iago Amaral Borduchi,Iago,Lateral,lat,Bahia,BAH,265,2,6,4.0,0,0.0
+123717,José Guilherme de Lima Costa,Zé Guilherme,Lateral,lat,Bahia,BAH,265,2,6,3.0,0,0.0
+107093,Luciano Batista da Silva Júnior,Luciano Juba,Lateral,lat,Bahia,BAH,265,2,7,11.19,3,9.5
+132412,Román Agustín Gómez,Román Gómez,Lateral,lat,Bahia,BAH,265,2,7,8.87,1,12.5
+106323,Caio Alexandre Souza e Silva,Caio Alexandre,Meia,mei,Bahia,BAH,265,4,6,4.93,2,-0.4
+98022,Erick Luis Conrado de Carvalho,Erick,Meia,mei,Bahia,BAH,265,4,6,4.5,3,0.23
+51772,Everton Augusto de Barros Ribeiro,Everton Ribeiro,Meia,mei,Bahia,BAH,265,4,7,10.45,3,5.87
+98517,Jean Lucas de Souza Oliveira,Jean Lucas,Meia,mei,Bahia,BAH,265,4,7,8.41,3,3.77
+107173,Michel Daryl Araújo Villar,Michel Araújo,Meia,mei,Bahia,BAH,265,4,6,3.82,1,-3.1
+104783,Nicolás Brian Acevedo Tabárez,Acevedo,Meia,mei,Bahia,BAH,265,4,7,6.08,3,4.67
+106822,Rodrigo Nestor Bertalia,Rodrigo Nestor,Meia,mei,Bahia,BAH,265,4,6,5.73,1,0.0
+97341,Rogério Mücke Ceni,Rogério Ceni,Técnico,tec,Bahia,BAH,265,6,7,11.35,3,6.29
+91772,David de Duarte Macedo,David Duarte,Zagueiro,zag,Bahia,BAH,265,3,6,5.01,2,2.6
+141419,Frederico Lippert Neto Gomes,Fredi Lippert,Zagueiro,zag,Bahia,BAH,265,3,6,2.0,0,0.0
+105373,Gabriel Lehman Xavier - Lheman / Lhman,Gabriel Xavier,Zagueiro,zag,Bahia,BAH,265,3,7,6.66,1,6.5
+130393,Luiz Gustavo Marinho Ribeiro dos Santos,Luiz Gustavo,Zagueiro,zag,Bahia,BAH,265,3,6,1.0,0,0.0
+105990,Santiago Martín Ramos Mingo,Santiago Mingo,Zagueiro,zag,Bahia,BAH,265,3,7,5.48,3,2.4
+98484,Victor Hugo Soares dos Santos,Kanu,Zagueiro,zag,Bahia,BAH,265,3,5,4.67,1,3.4
+147788,Arthur Izaque Bendayan de Castro Silva,Arthur Izaque,Atacante,ata,Botafogo,BOT,263,5,6,1.0,0,0.0
+92171,Arthur Mendonça Cabral,Arthur Cabral,Atacante,ata,Botafogo,BOT,263,5,6,9.08,3,5.97
+95799,Artur Victor Guimarães,Artur,Atacante,ata,Botafogo,BOT,263,5,6,8.57,3,4.7
+96353,Carlos Joaquín Correa,Joaquín Correa,Atacante,ata,Botafogo,BOT,263,5,6,8.0,0,0.0
+103179,Christopher Ramos de la Flor,Chris Ramos,Atacante,ata,Botafogo,BOT,263,5,5,7.0,0,0.0
+107170,Jefferson Ruan Pereira dos Santos,Jeffinho,Atacante,ata,Botafogo,BOT,263,5,6,5.0,0,0.0
+146375,José Kadir Barría Rose,Kadir,Atacante,ata,Botafogo,BOT,263,5,6,4.9,1,1.7
+142086,Kauan Almeida Toledo,Kauan Toledo,Atacante,ata,Botafogo,BOT,263,5,6,1.0,0,0.0
+142877,Lucas Martín Villalba Jaume,Villalba,Atacante,ata,Botafogo,BOT,263,5,6,5.14,1,0.0
+111831,Matheus Martins Silva dos Santos,Matheus Martins,Atacante,ata,Botafogo,BOT,263,5,6,6.16,3,3.8
+124757,Nathan Ribeiro Fernandes,Nathan Fernandes,Atacante,ata,Botafogo,BOT,263,5,6,5.61,3,3.17
+129930,Cristhian Joel Loor Santamaría - Christian,Cristhian Loor,Goleiro,gol,Botafogo,BOT,263,1,6,2.0,0,0.0
+107183,Leonardo Matias Baiersdorf Linck,Léo Linck,Goleiro,gol,Botafogo,BOT,263,1,6,6.0,0,0.0
+68806,Norberto Murara Neto,Neto,Goleiro,gol,Botafogo,BOT,263,1,6,8.62,3,4.43
+104191,Raul Jonas Steffens,Raul,Goleiro,gol,Botafogo,BOT,263,1,6,3.0,0,0.0
+72493,Alex Nicolao Telles,Alex Telles,Lateral,lat,Botafogo,BOT,263,2,6,9.99,3,3.1
+130698,Carlos Eduardo da Silva Santos,Kadu,Lateral,lat,Botafogo,BOT,263,2,6,1.0,0,0.0
+97468,Fernando Marçal de Oliveira,Marçal,Lateral,lat,Botafogo,BOT,263,2,5,7.71,1,8.0
+143072,Gabriel da Silva Abdias,Gabriel Abdias,Lateral,lat,Botafogo,BOT,263,2,6,3.0,0,0.0
+131964,Jhoan Hernández Mejía,Jhoan Hernández,Lateral,lat,Botafogo,BOT,263,2,6,4.0,0,0.0
+124481,Mateo Ponte Costa,Mateo Ponte,Lateral,lat,Botafogo,BOT,263,2,5,5.15,2,2.7
+100898,Victor Alexander da Silva,Vitinho,Lateral,lat,Botafogo,BOT,263,2,6,10.04,3,6.17
+69140,Allan Marques Loureiro,Allan,Meia,mei,Botafogo,BOT,263,4,6,4.84,3,1.33
+147782,Arthur Alves Novaes,Arthur Novaes,Meia,mei,Botafogo,BOT,263,4,6,1.0,0,0.0
+109987,Cristian Nicolás Medina,Medina,Meia,mei,Botafogo,BOT,263,4,6,8.0,0,0.0
+107231,Danilo dos Santos de Oliveira,Danilo,Meia,mei,Botafogo,BOT,263,4,6,14.96,3,12.4
+63289,Edenílson Andrade dos Santos,Edenílson,Meia,mei,Botafogo,BOT,263,4,6,6.91,3,4.0
+142484,Jordan Andrés Barrera Herrera,Barrera,Meia,mei,Botafogo,BOT,263,4,6,5.74,3,2.13
+146410,Marcos Felipe Vinagre Souza,Marquinhos,Meia,mei,Botafogo,BOT,263,4,6,0.85,1,0.0
+104693,Newton Araújo da Costa Júnior,Newton,Meia,mei,Botafogo,BOT,263,4,6,5.76,3,3.87
+105214,Santiago Mariano Rodríguez Molina,Santi Rodríguez,Meia,mei,Botafogo,BOT,263,4,5,7.36,2,2.85
+133696,Wallace Davi Nunes da Silva Dias,Wallace Davi,Meia,mei,Botafogo,BOT,263,4,6,4.0,0,0.0
+142890,Álvaro Montoro,Montoro,Meia,mei,Botafogo,BOT,263,4,6,8.45,3,4.07
+117965,Martín Rodrigo Anselmi,Martín Anselmi,Técnico,tec,Botafogo,BOT,263,6,6,8.68,3,6.64
+99274,Alexander Nahuel Barboza Ullúa,Alexander Barboza,Zagueiro,zag,Botafogo,BOT,263,3,6,11.68,3,7.17
+98280,Bartolomeu Jacinto Quissanga,Bastos,Zagueiro,zag,Botafogo,BOT,263,3,5,6.0,0,0.0
+108274,David Ricardo Loiola da Silva,David Ricardo,Zagueiro,zag,Botafogo,BOT,263,3,6,7.0,0,0.0
+146430,Gabriel Pereira Justino,Justino,Zagueiro,zag,Botafogo,BOT,263,3,6,2.0,0,0.0
+91158,Kaio Fernando da Silva Pantaleão,Kaio,Zagueiro,zag,Botafogo,BOT,263,3,5,7.0,0,0.0
+126013,Ythallo Ryckelm Rodrigues de Oliveira - Rycklem,Ythallo,Zagueiro,zag,Botafogo,BOT,263,3,6,3.5,1,0.2
+140906,Davi Gomes de Alvarenga,Davi Gomes,Atacante,ata,Bragantino,RBB,280,5,6,3.0,0,0.0
+70360,Eduardo Colcenti Antunes,Eduardo Sasha,Atacante,ata,Bragantino,RBB,280,5,7,6.37,3,2.33
+100695,Fernando dos Santos Pedro,Fernando,Atacante,ata,Bragantino,RBB,280,5,6,2.35,2,0.1
+124239,Henry David Mosquera Sánchez,Henry Mosquera,Atacante,ata,Bragantino,RBB,280,5,7,4.83,4,3.0
+108133,Isidro Miguel Pitta Saldívar,Isidro Pitta,Atacante,ata,Bragantino,RBB,280,5,6,4.12,3,-0.67
+123738,José María Herrera Ares,Herrera,Atacante,ata,Bragantino,RBB,280,5,6,4.04,2,0.35
+112886,Lucas Henrique Barbosa,Lucas Barbosa,Atacante,ata,Bragantino,RBB,280,5,7,8.73,4,5.02
+132580,Vinicius Mendonça Pereira,Vinicinho,Atacante,ata,Bragantino,RBB,280,5,6,3.75,2,0.25
+93882,Cleiton Schwengber,Cleiton,Goleiro,gol,Bragantino,RBB,280,1,7,7.96,4,4.42
+104588,Fabrício Oliveira de Souza,Fabrício,Goleiro,gol,Bragantino,RBB,280,1,5,2.0,0,0.0
+133671,Gustavo Reis de Alcântara,Gustavo Reis,Goleiro,gol,Bragantino,RBB,280,1,6,1.0,0,0.0
+106160,Lucas Alexandre Galdino de Azevedo,Lucão,Goleiro,gol,Bragantino,RBB,280,1,6,4.0,0,0.0
+72018,Tiago Luis Volpi,Tiago Volpi,Goleiro,gol,Bragantino,RBB,280,1,6,8.0,0,0.0
+105213,Ariel Agustín Sant'Anna Quintero,Sant Anna,Lateral,lat,Bragantino,RBB,280,2,5,5.45,1,6.2
+145400,Cauê Nascimento Santos,Cauê,Lateral,lat,Bragantino,RBB,280,2,6,2.0,0,0.0
+110715,José Andrés Hurtado Cheme,Andrés Hurtado,Lateral,lat,Bragantino,RBB,280,2,7,4.86,4,2.85
+94968,Luis Antônio da Rocha Júnior,Juninho Capixaba,Lateral,lat,Bragantino,RBB,280,2,7,15.26,4,11.05
+107236,Vanderlan Barbosa da Silva,Vanderlan,Lateral,lat,Bragantino,RBB,280,2,5,5.0,0,0.0
+107744,Bruno Conceição Praxedes,Praxedes,Meia,mei,Bragantino,RBB,280,4,6,4.0,0,0.0
+103295,Eric dos Santos Rodrigues,Eric Ramires,Meia,mei,Bragantino,RBB,280,4,6,3.24,3,-0.03
+111760,Fábio Silva de Freitas,Fabinho,Meia,mei,Bragantino,RBB,280,4,3,2.52,3,0.17
+78605,Gabriel Girotto Franco,Gabriel,Meia,mei,Bragantino,RBB,280,4,7,4.92,3,1.9
+122394,Gustavo Ribeiro Neves,Gustavinho,Meia,mei,Bragantino,RBB,280,4,7,7.98,4,6.37
+132274,Ignacio Sosa Ospital,Ignacio Sosa,Meia,mei,Bragantino,RBB,280,4,6,3.8,3,0.0
+126120,Marcelo Braz da Silva,Marcelinho,Meia,mei,Bragantino,RBB,280,4,6,3.03,1,6.3
+94067,Matheus Fernandes Siqueira,Matheus Fernandes,Meia,mei,Bragantino,RBB,280,4,7,4.75,3,2.2
+118563,Rodrigo Huendra Almeida Mendonça,Rodriguinho,Meia,mei,Bragantino,RBB,280,4,5,4.0,0,0.0
+131763,Yuri Silva Leles de Souza,Yuri Leles,Meia,mei,Bragantino,RBB,280,4,6,2.0,0,0.0
+39850,Vagner Carmo Mancini,Vagner Mancini,Técnico,tec,Bragantino,RBB,280,6,7,7.3,4,4.98
+111246,Alix Vinicius de Souza Sampaio,Alix Vinicius,Zagueiro,zag,Bragantino,RBB,280,3,3,4.5,3,1.0
+106434,Eduardo Gonzaga Mendes Santos,Eduardo Santos,Zagueiro,zag,Bragantino,RBB,280,3,7,4.45,1,0.0
+124758,Gustavo Henrique da Silva,Gustavo Henrique,Zagueiro,zag,Bragantino,RBB,280,3,6,3.0,0,0.0
+110750,Gustavo Marques Alves dos Santos,Gustavo Marques,Zagueiro,zag,Bragantino,RBB,280,3,6,6.75,3,6.9
+122897,Guzmán Rodríguez Ferrari,Guzmán Rodríguez,Zagueiro,zag,Bragantino,RBB,280,3,5,6.0,0,0.0
+122755,Lucas de Souza Cunha,Lucas Cunha,Zagueiro,zag,Bragantino,RBB,280,3,6,3.0,0,0.0
+87225,Pedro Henrique Ribeiro Gonçalves,Pedro Henrique,Zagueiro,zag,Bragantino,RBB,280,3,7,6.26,4,2.67
+138021,Sergio Stevan Palacios Zapata,Palacios,Zagueiro,zag,Bragantino,RBB,280,3,6,3.0,0,0.0
+88293,Altemir Cordeiro Pessôa Neto,Neto Pessoa,Atacante,ata,Chapecoense,CHA,315,5,6,3.0,0,0.0
+123625,Italo de Vargas da Rosa,Ítalo,Atacante,ata,Chapecoense,CHA,315,5,6,2.35,3,1.37
+141812,Jonathan Estiven Palacios Castillo,Palacios,Atacante,ata,Chapecoense,CHA,315,5,6,2.0,0,0.0
+146894,João Henrique Araújo Bom,João Bom,Atacante,ata,Chapecoense,CHA,315,5,6,2.0,0,0.0
+130619,Mailson Bezerra Silva,Mailson,Atacante,ata,Chapecoense,CHA,315,5,6,2.0,0,0.0
+108131,Maurício Garcez de Jesus,Garcez,Atacante,ata,Chapecoense,CHA,315,5,2,4.29,2,2.4
+95332,Márcio Antônio de Sousa Júnior,Marcinho,Atacante,ata,Chapecoense,CHA,315,5,7,3.62,3,2.47
+94286,Pedro Henrique Perotti,Perotti,Atacante,ata,Chapecoense,CHA,315,5,6,4.0,0,0.0
+116066,Rubens Tadeu Hartmann Ricoldi,Rubens,Atacante,ata,Chapecoense,CHA,315,5,6,3.67,2,4.0
+107516,Sebastião Ênio Santos de Almeida,Ênio,Atacante,ata,Chapecoense,CHA,315,5,6,4.0,0,0.0
+86292,Yannick Bolasie,Bolasie,Atacante,ata,Chapecoense,CHA,315,5,6,4.91,2,1.0
+102906,Anderson Silva da Paixão,Anderson,Goleiro,gol,Chapecoense,CHA,315,1,5,3.0,0,0.0
+124386,Kainã Correa Dal Magro,Kainã,Goleiro,gol,Chapecoense,CHA,315,1,6,1.0,0,0.0
+71043,Leonardo da Silva Vieira,Léo Vieira,Goleiro,gol,Chapecoense,CHA,315,1,7,4.21,3,4.93
+68822,Rafael de Carvalho Santos,Rafael Santos,Goleiro,gol,Chapecoense,CHA,315,1,6,3.0,0,0.0
+90061,Bruno de Jesus Pacheco,Bruno Pacheco,Lateral,lat,Chapecoense,CHA,315,2,6,6.0,0,0.0
+104470,Everton Souza da Cruz,Everton,Lateral,lat,Chapecoense,CHA,315,2,7,4.78,3,4.1
+111279,Gianluca Piola Minozzo,Mancha,Lateral,lat,Chapecoense,CHA,315,2,6,3.0,0,0.0
+121870,Gustavo Talles da Silva,Gustavo Talles,Lateral,lat,Chapecoense,CHA,315,2,6,2.0,0,0.0
+97969,Marcos Vinícius da Silva Santos,Marcos Vinícius,Lateral,lat,Chapecoense,CHA,315,2,6,2.0,1,-1.3
+105664,Walter David Clar Fritz,Walter Clar,Lateral,lat,Chapecoense,CHA,315,2,7,8.79,3,8.17
+104519,Camilo Reijers de Oliveira,Camilo,Meia,mei,Chapecoense,CHA,315,4,7,4.69,3,2.87
+140438,David Antunes da Silva,David,Meia,mei,Chapecoense,CHA,315,4,6,0.85,1,0.0
+68938,Giovanni Augusto Oliveira Cardoso,Giovanni Augusto,Meia,mei,Chapecoense,CHA,315,4,5,4.31,2,1.3
+103987,Higor Matheus Meritão,Higor Meritão,Meia,mei,Chapecoense,CHA,315,4,2,7.22,3,5.9
+70958,Jean Carlos Vicente,Jean Carlos,Meia,mei,Chapecoense,CHA,315,4,7,9.91,3,10.17
+122138,João Vitor de Souza Martins,João Vitor,Meia,mei,Chapecoense,CHA,315,4,6,2.57,1,0.0
+109336,Rafael dos Santos Carvalheira Natividade,Rafael Carvalheira,Meia,mei,Chapecoense,CHA,315,4,7,5.67,3,4.03
+130414,Robert dos Santos Conceição,Robert,Meia,mei,Chapecoense,CHA,315,4,5,3.51,1,3.0
+73481,Gilmar Dal Pozzo,Gilmar Dal Pozzo,Técnico,tec,Chapecoense,CHA,315,6,7,6.35,3,6.04
+95620,Bruno Leonardo dos Santos Covas,Bruno Leonardo,Zagueiro,zag,Chapecoense,CHA,315,3,7,3.64,2,2.6
+101393,Eduardo Vinícius Domachowski,Eduardo Doma,Zagueiro,zag,Chapecoense,CHA,315,3,7,4.72,3,4.83
+107453,João Paulo Silveira dos Santos,João Paulo,Zagueiro,zag,Chapecoense,CHA,315,3,6,4.91,1,7.0
+130806,Kauan Faria Gomes,Kauan,Zagueiro,zag,Chapecoense,CHA,315,3,6,1.0,0,0.0
+83048,Rafael Thyere de Albuquerque Marques,Rafael Thyere,Zagueiro,zag,Chapecoense,CHA,315,3,6,4.0,0,0.0
+97432,Victor Henrique Carvalho Caetano,Victor Caetano,Zagueiro,zag,Chapecoense,CHA,315,3,7,4.23,3,3.47
+148124,Vinicius Eduardo de Almeida Gomes da Silva,Vinicius,Zagueiro,zag,Chapecoense,CHA,315,3,6,2.0,0,0.0
+133543,Guilherme William Silva Inácio,Gui Negão,Atacante,ata,Corinthians,COR,264,5,6,3.61,2,0.0
+118844,Kaio César Andrade Lima,Kaio César,Atacante,ata,Corinthians,COR,264,5,5,8.0,0,0.0
+121824,Kayke Ferrari Guimarães,Kayke,Atacante,ata,Corinthians,COR,264,5,6,3.97,1,1.5
+85048,Memphis Depay,Memphis Depay,Atacante,ata,Corinthians,COR,264,5,7,12.12,3,1.33
+98225,Pedro Raul Garay da Silva,Pedro Raul,Atacante,ata,Corinthians,COR,264,5,6,4.54,2,0.05
+78435,Victor Vinícius Coelho dos Santos,Vitinho,Atacante,ata,Corinthians,COR,264,5,6,5.08,3,1.6
+100652,Yuri Alberto Monteiro da Silva,Yuri Alberto,Atacante,ata,Corinthians,COR,264,5,5,14.76,2,1.85
+131753,Felipe Longo Fernandes da Silva,Felipe Longo,Goleiro,gol,Corinthians,COR,264,1,6,2.0,0,0.0
+101574,Hugo de Souza Nogueira,Hugo Souza,Goleiro,gol,Corinthians,COR,264,1,7,11.29,3,6.57
+107179,Matheus Planelles Donelli,Matheus Donelli,Goleiro,gol,Corinthians,COR,264,1,6,3.0,0,0.0
+98720,Fabrizio Germán Angileri - Fabricio,Angileri,Lateral,lat,Corinthians,COR,264,2,6,4.52,1,2.5
+107908,Hugo Ferreira de Farias,Hugo,Lateral,lat,Corinthians,COR,264,2,5,4.0,0,0.0
+141873,João Vitor Barros Silva,Jacaré,Lateral,lat,Corinthians,COR,264,2,6,2.0,0,0.0
+101727,Matheus França Silva,Matheuzinho,Lateral,lat,Corinthians,COR,264,2,7,12.05,2,6.0
+105531,Matheus Lima Beltrão Oliveira Valin,Matheus Bidu,Lateral,lat,Corinthians,COR,264,2,7,13.22,2,12.05
+123689,Pedro Milans Carámbula,Milans,Lateral,lat,Corinthians,COR,264,2,6,7.21,1,4.9
+96652,Allan Rodrigues de Souza,Allan,Meia,mei,Corinthians,COR,264,4,7,4.13,2,0.5
+145744,André Luiz Santos Dias,André,Meia,mei,Corinthians,COR,264,4,7,6.13,2,5.25
+77485,André Martín Carrillo Díaz,Carrillo,Meia,mei,Corinthians,COR,264,4,6,6.23,3,2.33
+117910,Breno de Souza Bidon,Breno Bidon,Meia,mei,Corinthians,COR,264,4,7,12.04,2,7.45
+96342,Charles Rigon Mattos,Charles,Meia,mei,Corinthians,COR,264,4,6,4.09,2,1.7
+141995,Diego da Cruz Lopes,Dieguinho,Meia,mei,Corinthians,COR,264,4,6,4.17,1,1.6
+127242,Luiz Gustavo Lemos Carvalho,Bahia,Meia,mei,Corinthians,COR,264,4,6,2.0,0,0.0
+90370,Matheus Pereira da Silva,Matheus Pereira,Meia,mei,Corinthians,COR,264,4,5,5.21,2,1.6
+95556,Raniele Almeida Melo,Raniele,Meia,mei,Corinthians,COR,264,4,7,8.35,3,4.47
+117632,Rodrigo Garro,Garro,Meia,mei,Corinthians,COR,264,4,7,13.49,3,7.57
+122396,Ryan Gustavo de Lima,Ryan,Meia,mei,Corinthians,COR,264,4,6,3.0,0,0.0
+104036,Zakaria Labyad,Labyad,Meia,mei,Corinthians,COR,264,4,6,6.0,0,0.0
+40990,Dorival Silvestre Júnior,Dorival Júnior,Técnico,tec,Corinthians,COR,264,6,7,11.6,3,6.23
+92440,André Ramalho Silva,André Ramalho,Zagueiro,zag,Corinthians,COR,264,3,6,5.69,1,0.9
+69208,Gabriel Armando de Abreu,Gabriel Paulista,Zagueiro,zag,Corinthians,COR,264,3,7,11.71,2,8.15
+78248,Gustavo Henrique Vernes,Gustavo Henrique,Zagueiro,zag,Corinthians,COR,264,3,7,11.07,2,6.7
+125488,João Pedro de Sousa Rodrigues - Tchoca,João Pedro,Zagueiro,zag,Corinthians,COR,264,3,6,7.85,1,8.9
+147429,Brayan Felipi Pereira Gravelo,Brayan,Atacante,ata,Coritiba,CFC,294,5,6,1.0,0,0.0
+93988,Breno Henrique Vasconcelos Lopes,Breno Lopes,Atacante,ata,Coritiba,CFC,294,5,7,9.98,4,7.8
+141165,Enzo Vágner Moraes de Souza,Enzo Vagner,Atacante,ata,Coritiba,CFC,294,5,6,1.04,1,0.5
+101729,Fabio Augusto Luciano da Silva,Fabinho,Atacante,ata,Coritiba,CFC,294,5,6,3.13,1,1.2
+117930,Joaquín Lavega Colzada,Lavega,Atacante,ata,Coritiba,CFC,294,5,7,4.51,4,3.57
+123648,Lucas Ronier Vieira Pires,Lucas Ronier,Atacante,ata,Coritiba,CFC,294,5,7,10.11,4,9.83
+86485,Marcos da Silva França,Keno,Atacante,ata,Coritiba,CFC,294,5,6,4.22,2,-0.3
+90302,Pedro Rocha Neves,Pedro Rocha,Atacante,ata,Coritiba,CFC,294,5,7,7.17,4,4.52
+93371,Rodrigo Rodrigues Silva,Rodrigo Rodrigues,Atacante,ata,Coritiba,CFC,294,5,5,4.0,0,0.0
+124834,Ruan Lucas de Assis,Ruan Assis,Atacante,ata,Coritiba,CFC,294,5,6,1.0,0,0.0
+131279,Thiago Azaf Siqueira Soares,Thiago Azaf,Atacante,ata,Coritiba,CFC,294,5,6,1.0,0,0.0
+50742,Gabriel Christoni Leite,Gabriel Leite,Goleiro,gol,Coritiba,CFC,294,1,6,3.0,0,0.0
+115840,João Victor Silva Benassi,Benassi,Goleiro,gol,Coritiba,CFC,294,1,5,1.0,0,0.0
+110708,Pedro Felipe de Faria Rangel,Pedro Rangel,Goleiro,gol,Coritiba,CFC,294,1,7,2.79,1,0.3
+125803,Pedro Luccas Morisco da Silva,Pedro Morisco,Goleiro,gol,Coritiba,CFC,294,1,5,8.04,4,5.0
+84339,Bruno Ferreira Melo,Bruno Melo,Lateral,lat,Coritiba,CFC,294,2,6,4.13,3,2.5
+133460,Felipe Guimarães da Silva,Felipe Guimarães,Lateral,lat,Coritiba,CFC,294,2,6,1.0,0,0.0
+101708,Felipe Jonatan Rocha Andrade,Felipe Jonatan,Lateral,lat,Coritiba,CFC,294,2,7,5.21,1,2.0
+82628,Guilherme de Jesus da Silva,Tinga,Lateral,lat,Coritiba,CFC,294,2,2,5.55,4,3.17
+131516,João Pedro Chermont Crema,JP Chermont,Lateral,lat,Coritiba,CFC,294,2,2,2.35,1,1.5
+124358,João Vitor da Silva Almeida,João Almeida,Lateral,lat,Coritiba,CFC,294,2,6,1.0,0,0.0
+141337,Lucas Taverna,Lucas Taverna,Lateral,lat,Coritiba,CFC,294,2,6,1.0,0,0.0
+148152,Alejandro Ararat Díaz,Ararat,Meia,mei,Coritiba,CFC,294,4,6,4.0,0,0.0
+84428,Fernando Pereira do Nascimento,Fernando Sobral,Meia,mei,Coritiba,CFC,294,4,6,4.56,2,1.5
+110633,Gustavo Silva de Oliveira,Gustavo,Meia,mei,Coritiba,CFC,294,4,6,4.0,0,0.0
+125551,Jean Gabriel Silveira,Jean Gabriel,Meia,mei,Coritiba,CFC,294,4,6,2.0,0,0.0
+84626,Josué Filipe Soares Pesqueira,Josué,Meia,mei,Coritiba,CFC,294,4,7,4.54,3,0.9
+130283,Matheus Dalsasso Dias,Matheus Dias,Meia,mei,Coritiba,CFC,294,4,6,1.0,0,0.0
+104811,Sebastián Gómez Londoño,Sebastián Gómez,Meia,mei,Coritiba,CFC,294,4,6,3.76,2,1.6
+112576,Vinicius Romualdo dos Santos,Vini Paulista,Meia,mei,Coritiba,CFC,294,4,6,3.97,4,2.95
+101405,Wallisson Luiz Alves Máximo,Wallisson,Meia,mei,Coritiba,CFC,294,4,6,5.59,2,5.7
+81952,Willian Osmar de Oliveira Silva,Willian Oliveira,Meia,mei,Coritiba,CFC,294,4,7,5.6,4,2.9
+126977,Fernando Seabra,Fernando Seabra,Técnico,tec,Coritiba,CFC,294,6,7,6.25,4,4.85
+97878,Jacy Maranhão Oliveira,Jacy,Zagueiro,zag,Coritiba,CFC,294,3,2,2.78,4,1.17
+71227,Maicon Pereira Roque,Maicon,Zagueiro,zag,Coritiba,CFC,294,3,7,3.81,4,1.18
+63354,Rodrigo Modesto da Silva Moledo,Rodrigo Moledo,Zagueiro,zag,Coritiba,CFC,294,3,6,3.0,0,0.0
+78855,Thiago dos Santos,Thiago Santos,Zagueiro,zag,Coritiba,CFC,294,3,2,2.14,2,0.0
+109127,Tiago Cóser,Tiago Cóser,Zagueiro,zag,Coritiba,CFC,294,3,6,1.56,3,0.37
+92811,Bruno Rafael Rodrigues do Nascimento,Bruno Rodrigues,Atacante,ata,Cruzeiro,CRU,283,5,6,3.2,2,0.25
+90608,Francisco da Costa Aragão,Chico da Costa,Atacante,ata,Cruzeiro,CRU,283,5,5,5.0,0,0.0
+103445,Kaio Jorge Pinto Ramos,Kaio Jorge,Atacante,ata,Cruzeiro,CRU,283,5,7,12.66,4,4.42
+137542,Kaique Kenji Takamura Correa,Kaique Kenji,Atacante,ata,Cruzeiro,CRU,283,5,6,2.16,2,0.0
+132264,Keny Alexander Arroyo Alvarado,Arroyo,Atacante,ata,Cruzeiro,CRU,283,5,6,4.95,3,0.53
+114405,Luis Fernando Sinisterra Lucumí,Sinisterra,Atacante,ata,Cruzeiro,CRU,283,5,5,5.76,1,1.7
+113158,Marcus Vinícius Oliveira Alencar,Marquinhos,Atacante,ata,Cruzeiro,CRU,283,5,5,4.0,0,0.0
+131967,Neyser Villarreal - Neiser,Villarreal,Atacante,ata,Cruzeiro,CRU,283,5,6,5.0,0,0.0
+146807,Rayan Passaglia Lelis,Rayan Lelis,Atacante,ata,Cruzeiro,CRU,283,5,6,2.0,0,0.0
+137543,Tevis Gabriel Alves Santos,Tevis,Atacante,ata,Cruzeiro,CRU,283,5,6,2.0,0,0.0
+93478,Wanderson Maciel Sousa Campos,Wanderson,Atacante,ata,Cruzeiro,CRU,283,5,6,6.56,3,3.97
+42234,Cássio Roberto Ramos,Cássio,Goleiro,gol,Cruzeiro,CRU,283,1,5,7.61,4,1.25
+142130,Marcelo Eráclito de Souza Filho,Marcelo Eráclito,Goleiro,gol,Cruzeiro,CRU,283,1,6,1.0,0,0.0
+111690,Matheus Cunha Queiroz,Matheus Cunha,Goleiro,gol,Cruzeiro,CRU,283,1,7,3.0,0,0.0
+117404,Otávio Eleodoro Rezende Costa,Otávio,Goleiro,gol,Cruzeiro,CRU,283,1,6,2.0,0,0.0
+42500,Fagner Conserva Lemos,Fagner,Lateral,lat,Cruzeiro,CRU,283,2,7,5.08,4,1.72
+112709,Kaiki Bruno da Silva,Kaiki Bruno,Lateral,lat,Cruzeiro,CRU,283,2,7,10.03,4,2.82
+143600,Kauã Moraes da Silva,Kauã Moraes,Lateral,lat,Cruzeiro,CRU,283,2,6,3.0,0,0.0
+139345,Kauã Prates de Almeida,Kauã Prates,Lateral,lat,Cruzeiro,CRU,283,2,6,3.39,1,0.0
+144423,Nicolas Pontes de Souza Almeida,Nicolas Pontes,Lateral,lat,Cruzeiro,CRU,283,2,6,1.0,0,0.0
+147297,William Fernando Soares de Almeida,William Fernando,Lateral,lat,Cruzeiro,CRU,283,2,6,1.0,0,0.0
+89275,Willian de Asevedo Furtado,William,Lateral,lat,Cruzeiro,CRU,283,2,3,9.37,3,1.83
+146992,Cauan Matteo Baptistella,Cauan Baptistella,Meia,mei,Cruzeiro,CRU,283,4,6,2.0,0,0.0
+104502,Christian Roberto Alves Cardoso,Christian,Meia,mei,Cruzeiro,CRU,283,4,7,7.18,4,2.92
+89256,Gerson Santos da Silva,Gerson,Meia,mei,Cruzeiro,CRU,283,4,7,9.16,4,2.25
+122660,João Wellington Gadelha Melo de Oliveira,Japa,Meia,mei,Cruzeiro,CRU,283,4,6,3.0,0,0.0
+84558,Lucas Daniel Romero,Lucas Romero,Meia,mei,Cruzeiro,CRU,283,4,7,8.39,4,3.85
+79701,Lucas Silva Borges,Lucas Silva,Meia,mei,Cruzeiro,CRU,283,4,7,5.25,4,0.43
+96610,Matheus Fellipe Costa Pereira,Matheus Pereira,Meia,mei,Cruzeiro,CRU,283,4,7,17.49,4,7.48
+100742,Matheus Henrique de Souza,Matheus Henrique,Meia,mei,Cruzeiro,CRU,283,4,6,5.91,4,1.88
+143350,Murilo Rhikman Alves Pimentel,Murilo Rhikman,Meia,mei,Cruzeiro,CRU,283,4,6,3.0,0,0.0
+146991,Rhuan Gabriel Rodrigues de Souza Silva,Rhuan Gabriel,Meia,mei,Cruzeiro,CRU,283,4,6,1.0,0,0.0
+117842,Vitor Hugo Amorim de Assis,Vitinho,Meia,mei,Cruzeiro,CRU,283,4,6,2.0,0,0.0
+88479,Walace Souza Silva,Walace,Meia,mei,Cruzeiro,CRU,283,4,6,4.0,0,0.0
+45125,Adenor Leonardo Bachi,Tite,Técnico,tec,Cruzeiro,CRU,283,6,7,9.22,4,3.36
+142049,Bruno Ferreira Alves,Bruno Alves,Zagueiro,zag,Cruzeiro,CRU,283,3,6,2.0,0,0.0
+90768,Fabrício Bruno Soares de Faria,Fabrício Bruno,Zagueiro,zag,Cruzeiro,CRU,283,3,7,7.94,4,1.55
+124912,Jonathan de Jesus Alves,Jonathan Jesus,Zagueiro,zag,Cruzeiro,CRU,283,3,6,4.91,1,0.0
+123649,José Janderson da Silva Marques,Janderson,Zagueiro,zag,Cruzeiro,CRU,283,3,6,1.0,0,0.0
+105047,João Marcelo Messias Ferreira,João Marcelo,Zagueiro,zag,Cruzeiro,CRU,283,3,6,3.75,3,0.9
+147287,Kaiquy Luiz Alves Vasco,Kaiquy Luiz,Zagueiro,zag,Cruzeiro,CRU,283,3,6,1.0,0,0.0
+106593,Lucas Hernán Villalba,Villalba,Zagueiro,zag,Cruzeiro,CRU,283,3,7,9.48,1,1.5
+90285,Bruno Henrique Pinto,Bruno Henrique,Atacante,ata,Flamengo,FLA,262,5,6,7.29,2,1.55
+145705,Douglas Costa Telles,Douglas Telles,Atacante,ata,Flamengo,FLA,262,5,6,2.0,0,0.0
+86757,Everton Sousa Soares,Everton,Atacante,ata,Flamengo,FLA,262,5,7,8.29,2,3.3
+109096,Gonzalo Jordy Plata Jiménez,Plata,Atacante,ata,Flamengo,FLA,262,5,2,9.44,1,10.6
+82627,Luiz de Araújo Guimarães Neto,Luiz Araújo,Atacante,ata,Flamengo,FLA,262,5,6,10.0,0,0.0
+94583,Pedro Guilherme Abreu dos Santos,Pedro,Atacante,ata,Flamengo,FLA,262,5,2,16.2,2,3.3
+98873,Samuel Dias Lino,Samuel Lino,Atacante,ata,Flamengo,FLA,262,5,6,8.23,2,3.1
+122573,Wallace Yan de Souza Barreto,Wallace Yan,Atacante,ata,Flamengo,FLA,262,5,6,5.0,0,0.0
+99552,Agustín Daniel Rossi,Rossi,Goleiro,gol,Flamengo,FLA,262,1,7,7.39,2,1.75
+103183,Andrew da Silva Ventura,Andrew,Goleiro,gol,Flamengo,FLA,262,1,6,3.0,0,0.0
+122318,Francisco Dyogo Bento Alves,Dyogo Alves,Goleiro,gol,Flamengo,FLA,262,1,6,3.0,0,0.0
+130189,Leonardo Nannetti Lopes,Léo Nannetti,Goleiro,gol,Flamengo,FLA,262,1,6,2.0,0,0.0
+61987,Alex Sandro Lobo Silva,Alex Sandro,Lateral,lat,Flamengo,FLA,262,2,7,10.09,2,2.75
+88393,Ayrton Lucas Dantas de Medeiros,Ayrton Lucas,Lateral,lat,Flamengo,FLA,262,2,6,8.0,0,0.0
+122320,Daniel dos Santos Salles,Daniel Sales,Lateral,lat,Flamengo,FLA,262,2,6,2.0,0,0.0
+96870,Emerson Aparecido Leite de Souza Júnior,Emerson Royal,Lateral,lat,Flamengo,FLA,262,2,6,4.96,1,2.0
+84816,Guillermo Varela Olivera,Varela,Lateral,lat,Flamengo,FLA,262,2,7,6.86,2,3.2
+143295,Caio Joshua Lana de Andrade,Joshua,Meia,mei,Flamengo,FLA,262,4,6,3.0,0,0.0
+99228,Diego Nicolás de la Cruz Arcosa,De la Cruz,Meia,mei,Flamengo,FLA,262,4,6,7.9,1,3.1
+91473,Erick Antonio Pulgar Farfán,Erick Pulgar,Meia,mei,Flamengo,FLA,262,4,7,8.05,2,1.55
+115914,Everton Gustavo Fernandes Araújo,Evertton Araújo,Meia,mei,Flamengo,FLA,262,4,2,3.3,2,0.75
+87863,Giorgian Daniel de Arrascaeta Benedetti,Arrascaeta,Meia,mei,Flamengo,FLA,262,4,7,18.96,2,4.6
+130382,Guilherme Henrique Bernardineli Gomes,Guilherme Gomes,Meia,mei,Flamengo,FLA,262,4,6,3.0,0,0.0
+105436,Jorge Andrés Carrascal Guardo,Carrascal,Meia,mei,Flamengo,FLA,262,4,6,10.95,2,2.95
+84735,Jorge Luiz Frello Filho,Jorginho,Meia,mei,Flamengo,FLA,262,4,2,11.64,1,-1.8
+94930,Lucas Tolentino Coelho de Lima,Lucas Paquetá,Meia,mei,Flamengo,FLA,262,4,7,17.27,1,5.6
+142275,Luiz Felipe Mariano dos Santos,Luiz Felipe,Meia,mei,Flamengo,FLA,262,4,6,1.0,0,0.0
+141628,Pablo Lúcio,Pablo Lúcio,Meia,mei,Flamengo,FLA,262,4,6,2.0,0,0.0
+80061,Saúl Ñíguez Esclapez,Saúl,Meia,mei,Flamengo,FLA,262,4,5,7.0,0,0.0
+147875,Daniel Carvalho Marinho da Silva,Daniel Silva,Zagueiro,zag,Flamengo,FLA,262,3,6,1.0,0,0.0
+69783,Danilo Luiz da Silva,Danilo,Zagueiro,zag,Flamengo,FLA,262,3,6,8.0,0,0.0
+140303,João Pedro do Nascimento da Mata,Da Mata,Zagueiro,zag,Flamengo,FLA,262,3,6,2.0,0,0.0
+140492,João Victor de Souza Cunha,João Victor,Zagueiro,zag,Flamengo,FLA,262,3,6,2.0,0,0.0
+83528,Leonardo Pereira,Léo Pereira,Zagueiro,zag,Flamengo,FLA,262,3,7,9.24,2,-0.1
+97867,Leonardo Rech Ortiz,Léo Ortiz,Zagueiro,zag,Flamengo,FLA,262,3,7,9.22,2,1.2
+97900,Vitor Eduardo da Silva Matos,Vitão,Zagueiro,zag,Flamengo,FLA,262,3,6,9.0,0,0.0
+102928,Agustín Canobbio Graviz,Canobbio,Atacante,ata,Fluminense,FLU,266,5,7,7.26,3,3.07
+79631,Germán Ezequiel Cano,Cano,Atacante,ata,Fluminense,FLU,266,5,6,6.0,0,0.0
+110759,John Kennedy Batista de Souza,John Kennedy,Atacante,ata,Fluminense,FLU,266,5,7,7.2,4,5.27
+143465,Keven Samuel Moreira dos Santos,Keven Samuel,Atacante,ata,Fluminense,FLU,266,5,6,1.0,0,0.0
+132071,Kevin Steven Serna Jaramillo,Serna,Atacante,ata,Fluminense,FLU,266,5,7,6.41,4,1.97
+127969,Matheus dos Reis Francisco,Matheus Reis,Atacante,ata,Fluminense,FLU,266,5,6,1.0,0,0.0
+140484,Riquelme Felipe Silva de Almeida,Riquelme Felipe,Atacante,ata,Fluminense,FLU,266,5,6,4.0,0,0.0
+108474,Santiago Moreno,Santi Moreno,Atacante,ata,Fluminense,FLU,266,5,6,2.49,3,-0.1
+143463,Wesley Natã de Freitas Prado,Wesley Natã,Atacante,ata,Fluminense,FLU,266,5,6,1.0,0,0.0
+87258,Yeferson Julio Soteldo Martínez,Soteldo,Atacante,ata,Fluminense,FLU,266,5,6,6.18,1,2.2
+37656,Fábio Deivson Lopes Maciel,Fábio,Goleiro,gol,Fluminense,FLU,266,1,7,10.6,4,5.2
+101478,Marcelo de Araújo Pitaluga Filho,Marcelo Pitaluga,Goleiro,gol,Fluminense,FLU,266,1,6,3.0,0,0.0
+102137,Vitor Eudes de Souza Costa,Vitor Eudes,Goleiro,gol,Fluminense,FLU,266,1,6,2.0,0,0.0
+101319,Cláudio Rodrigues Gomes,Guga,Lateral,lat,Fluminense,FLU,266,2,6,5.78,2,1.9
+87228,Guilherme Antonio Arana Lopes,Guilherme Arana,Lateral,lat,Fluminense,FLU,266,2,6,8.39,3,2.83
+127932,Julio Cesar Lima Fidelis,Júlio Fidelis,Lateral,lat,Fluminense,FLU,266,2,6,2.0,0,0.0
+78445,Renê Rodrigues Martins,Renê,Lateral,lat,Fluminense,FLU,266,2,7,9.58,3,8.27
+73384,Samuel Xavier Brito,Samuel Xavier,Lateral,lat,Fluminense,FLU,266,2,7,8.59,3,4.2
+130650,Facundo Bernal Cruz,Bernal,Meia,mei,Fluminense,FLU,266,4,6,2.9,4,0.3
+100987,Gustavo Nonato Santana,Nonato,Meia,mei,Fluminense,FLU,266,4,5,7.28,2,5.3
+116447,Hércules Pereira do Nascimento,Hércules,Meia,mei,Fluminense,FLU,266,4,2,6.37,2,1.75
+98672,Jefferson David Savarino Quintero,Savarino,Meia,mei,Fluminense,FLU,266,4,6,10.33,2,4.9
+89837,Luciano Federico Acosta,Lucho Acosta,Meia,mei,Fluminense,FLU,266,4,7,13.43,4,10.13
+109573,Matheus Martinelli Lima,Martinelli,Meia,mei,Fluminense,FLU,266,4,7,6.42,4,1.98
+82463,Otávio Henrique Passos Santos,Otávio,Meia,mei,Fluminense,FLU,266,4,2,4.21,1,1.7
+62977,Paulo Henrique Chagas de Lima,Ganso,Meia,mei,Fluminense,FLU,266,4,6,4.53,4,0.85
+99366,Luis Francisco Zubeldía,Luis Zubeldía,Técnico,tec,Fluminense,FLU,266,6,7,9.42,4,5.41
+103523,Ignácio da Silva Oliveira,Ignácio,Zagueiro,zag,Fluminense,FLU,266,3,6,5.95,1,1.6
+89493,Igor Rabello da Costa,Igor Rabello,Zagueiro,zag,Fluminense,FLU,266,3,6,5.0,0,0.0
+132553,Jemmes Bruno Ribeiro da Silva,Jemmes,Zagueiro,zag,Fluminense,FLU,266,3,7,7.62,3,5.23
+113034,Juan Pablo Freytes,Freytes,Zagueiro,zag,Fluminense,FLU,266,3,7,4.68,4,2.5
+105807,Luan de Freitas Molarinho Chagas,Luan Freitas,Zagueiro,zag,Fluminense,FLU,266,3,6,3.0,0,0.0
+121792,André Henrique da Silva Martins,André,Atacante,ata,Grêmio,GRE,284,5,6,3.21,3,1.2
+105563,Carlos Vinícius Alves Morais,Carlos Vinícius,Atacante,ata,Grêmio,GRE,284,5,7,17.42,4,9.25
+91908,Cristian David Pavón,Pavón,Atacante,ata,Grêmio,GRE,284,5,7,6.09,4,2.95
+142004,Francis Amuzu,Amuzu,Atacante,ata,Grêmio,GRE,284,5,7,7.44,4,4.95
+141595,Gabriel Ferreira de Carvalho,Gabriel Mec,Atacante,ata,Grêmio,GRE,284,5,2,0.78,1,-0.3
+142261,Jeferson Borges dos Santos,Jeferson,Atacante,ata,Grêmio,GRE,284,5,6,1.0,0,0.0
+106104,José David Enamorado Gómez,Enamorado,Atacante,ata,Grêmio,GRE,284,5,6,7.52,3,2.43
+89368,Martin Christensen Braithwaite,Braithwaite,Atacante,ata,Grêmio,GRE,284,5,6,13.0,0,0.0
+105089,Mateus Cardoso Lemos Martins,Tetê,Atacante,ata,Grêmio,GRE,284,5,7,11.79,3,6.63
+112616,Gabriel Hamester Grando,Gabriel Grando,Goleiro,gol,Grêmio,GRE,284,1,6,4.0,0,0.0
+116067,Thiago Beltrame Stallbaum,Thiago Beltrame,Goleiro,gol,Grêmio,GRE,284,1,6,2.0,0,0.0
+71631,Weverton Pereira da Silva,Weverton,Goleiro,gol,Grêmio,GRE,284,1,7,6.24,4,1.52
+102318,Caio Fernando de Oliveira,Caio Paulista,Lateral,lat,Grêmio,GRE,284,2,6,5.0,0,0.0
+89273,João Pedro Maturano dos Santos,João Pedro,Lateral,lat,Grêmio,GRE,284,2,5,3.33,4,0.6
+63013,Marcos Luis Rocha Aquino,Marcos Rocha,Lateral,lat,Grêmio,GRE,284,2,6,7.36,1,0.0
+91706,Marlon Rodrigues Xavier,Marlon,Lateral,lat,Grêmio,GRE,284,2,7,10.91,4,6.95
+90532,Arthur Henrique Ramos de Oliveira Melo,Arthur Melo,Meia,mei,Grêmio,GRE,284,4,7,9.87,3,5.2
+89883,Douglas Moreira Fagundes,Dodi,Meia,mei,Grêmio,GRE,284,4,6,3.78,3,0.03
+108162,Juan Ignacio Martín Nardoni,Nardoni,Meia,mei,Grêmio,GRE,284,4,6,9.17,1,0.7
+147545,Jéferson Forneck,Jefinho,Meia,mei,Grêmio,GRE,284,4,6,1.46,1,1.5
+143173,Leonel Ulises Perez,Leonel Pérez,Meia,mei,Grêmio,GRE,284,4,6,5.0,0,0.0
+97145,Mathías Adalberto Villasanti Rolón,Villasanti,Meia,mei,Grêmio,GRE,284,4,6,7.0,0,0.0
+109966,Miguel Ángel Monsalve Gonzáles - González,Monsalve,Meia,mei,Grêmio,GRE,284,4,6,4.38,1,0.4
+130889,Riquelme Freitas dos Santos,Riquelme,Meia,mei,Grêmio,GRE,284,4,6,4.0,0,0.0
+147546,Roger Dias Fernandes,Roger,Meia,mei,Grêmio,GRE,284,4,6,1.35,1,1.2
+118238,Ronald Cardoso Falkoski,Ronald,Meia,mei,Grêmio,GRE,284,4,6,3.0,0,0.0
+140496,Tiago Augusto Gonçalves,Tiaguinho,Meia,mei,Grêmio,GRE,284,4,6,1.0,0,0.0
+42135,Willian Borges da Silva,Willian,Meia,mei,Grêmio,GRE,284,4,2,4.62,3,1.63
+88037,Luís Manuel Ribeiro de Castro,Luís Castro,Técnico,tec,Grêmio,GRE,284,6,6,10.31,4,5.57
+130048,Erick Carlos Noriega Loret de Mola,Noriega,Zagueiro,zag,Grêmio,GRE,284,3,7,9.58,3,8.47
+87887,Fabián Cornelio Balbuena González,Balbuena,Zagueiro,zag,Grêmio,GRE,284,3,2,6.82,2,3.0
+111309,Gustavo Martins de Souza Santos,Gustavo Martins,Zagueiro,zag,Grêmio,GRE,284,3,2,6.57,3,2.97
+125467,Viery Fernandes Santos Lopes,Viery,Zagueiro,zag,Grêmio,GRE,284,3,7,3.47,1,2.1
+104994,Wagner Leonardo Calvelo de Souza,Wagner Leonardo,Zagueiro,zag,Grêmio,GRE,284,3,6,5.73,3,2.93
+87342,Walter Kannemann,Kannemann,Zagueiro,zag,Grêmio,GRE,284,3,6,5.0,0,0.0
+101715,Alerrandro Barra Mansa Realino de Souza,Alerrandro,Atacante,ata,Internacional,INT,285,5,6,6.44,3,0.57
+107989,Johan Stiven Carbonero Balanta,Carbonero,Atacante,ata,Internacional,INT,285,5,7,8.24,4,4.42
+147202,João Pedro Bezerra de Oliveira Lo,João Bezerra,Atacante,ata,Internacional,INT,285,5,6,1.0,0,0.0
+142638,João Victor Alves de Morais Francisco,João Victor,Atacante,ata,Internacional,INT,285,5,6,1.0,0,0.0
+111829,Kayky da Silva Chagas,Kayky,Atacante,ata,Internacional,INT,285,5,6,4.75,2,1.6
+92854,Rafael Santos Borré Maury,Borré,Atacante,ata,Internacional,INT,285,5,7,7.83,4,4.15
+143488,Raykkonen Pereira Soares,Raykkonen,Atacante,ata,Internacional,INT,285,5,6,2.63,1,0.5
+101960,Vitor Hugo Naum dos Santos,Vitinho,Atacante,ata,Internacional,INT,285,5,7,7.83,4,4.77
+111683,Anthoni Spier Souza,Anthoni,Goleiro,gol,Internacional,INT,285,1,6,3.0,0,0.0
+130438,Diego Esser Pereira,Diego,Goleiro,gol,Internacional,INT,285,1,6,1.0,0,0.0
+105949,Sergio Ramón Rochet Álvarez,Rochet,Goleiro,gol,Internacional,INT,285,1,7,7.11,4,3.1
+110426,Alexandro Ezequiel Bernabei,Bernabei,Lateral,lat,Internacional,INT,285,2,7,8.41,4,2.72
+146632,Alisson Rodrigues de Melo,Alisson,Lateral,lat,Internacional,INT,285,2,6,1.0,0,0.0
+110510,Braian Nahuel Aguirre,Aguirre,Lateral,lat,Internacional,INT,285,2,2,4.85,4,2.47
+97899,Matheus Bahia Santos,Matheus Bahia,Lateral,lat,Internacional,INT,285,2,6,7.0,0,0.0
+123744,Alan Jesús Rodríguez Guaglianoni,Alan Rodríguez,Meia,mei,Internacional,INT,285,4,6,4.61,2,0.0
+68685,Alan Patrick Lourenço,Alan Patrick,Meia,mei,Internacional,INT,285,4,7,8.62,4,4.65
+124270,Allex Rodrigues Pereira da Silva,Allex,Meia,mei,Internacional,INT,285,4,6,1.77,1,2.3
+106202,Bruno Gomes da Silva Clevelário,Bruno Gomes,Meia,mei,Internacional,INT,285,4,2,7.77,4,5.55
+70944,Bruno Henrique Corsini,Bruno Henrique,Meia,mei,Internacional,INT,285,4,6,5.31,2,1.8
+107174,Bruno Vinícius Souza Ramos,Bruno Tabata,Meia,mei,Internacional,INT,285,4,5,4.27,1,0.5
+124271,Gustavo Prado Alves,Gustavo Prado,Meia,mei,Internacional,INT,285,4,6,4.0,0,0.0
+126182,Paulo Lucas Santos de Paula,Paulinho,Meia,mei,Internacional,INT,285,4,7,3.93,4,1.4
+86711,Richard Cândido Coelho,Richard,Meia,mei,Internacional,INT,285,4,6,4.0,0,0.0
+105157,Rodrigo Román Villagra,Villagra,Meia,mei,Internacional,INT,285,4,6,6.55,1,0.0
+92981,Ronaldo da Silva Souza Guerrero,Ronaldo,Meia,mei,Internacional,INT,285,4,7,4.17,4,3.9
+89637,Thiago Maia Alencar,Thiago Maia,Meia,mei,Internacional,INT,285,4,6,5.62,1,1.5
+115479,Paulo César Pezzolano Suárez,Paulo Pezzolano,Técnico,tec,Internacional,INT,285,6,7,6.73,4,4.15
+137618,Clayton Sampaio Pereira,Clayton Sampaio,Zagueiro,zag,Internacional,INT,285,3,6,3.0,0,0.0
+97642,Félix Eduardo Torres Caicedo,Félix Torres,Zagueiro,zag,Internacional,INT,285,3,6,3.73,4,1.6
+72951,Gabriel Iván Mercado,Mercado,Zagueiro,zag,Internacional,INT,285,3,7,4.58,3,1.77
+92182,José Carlos Ferreira Júnior,Juninho,Zagueiro,zag,Internacional,INT,285,3,6,5.0,0,0.0
+139200,Pedro Kauã Rodrigues Machado,Pedro Kauã,Zagueiro,zag,Internacional,INT,285,3,6,1.0,0,0.0
+111466,Victor Gabriel da Conceição Ribeiro,Victor Gabriel,Zagueiro,zag,Internacional,INT,285,3,7,4.57,3,3.07
+97321,Alesson dos Santos Batista,Alesson,Atacante,ata,Mirassol,MIR,2305,5,6,8.97,3,6.2
+81005,André Luis Silva de Aguiar,André Luis,Atacante,ata,Mirassol,MIR,2305,5,6,5.0,0,0.0
+108713,Antonio Javier Galeano Ferreira,Galeano,Atacante,ata,Mirassol,MIR,2305,5,6,5.79,3,1.17
+90917,Carlos Eduardo Ferreira de Souza,Carlos Eduardo,Atacante,ata,Mirassol,MIR,2305,5,6,4.4,2,1.3
+104204,Edson Guilherme Mendes dos Santos,Edson Carioca,Atacante,ata,Mirassol,MIR,2305,5,6,5.0,0,0.0
+89918,Everton Galdino Moreira,Everton Galdino,Atacante,ata,Mirassol,MIR,2305,5,6,2.84,3,0.57
+84042,Francisco das Chagas Soares dos Santos Meireles,Tiquinho Soares,Atacante,ata,Mirassol,MIR,2305,5,6,7.0,0,0.0
+98384,Luiz Henrique Soares Firmino,Negueba,Atacante,ata,Mirassol,MIR,2305,5,6,9.39,3,7.93
+102667,Nathan Uiliam Fogaça - Uilian,Nathan Fogaça,Atacante,ata,Mirassol,MIR,2305,5,6,6.61,3,6.3
+117403,Renato Marques de Oliveira Júnior,Renato Marques,Atacante,ata,Mirassol,MIR,2305,5,6,4.01,1,2.1
+79066,Alex Roberto Santana Rafael,Alex Muralha,Goleiro,gol,Mirassol,MIR,2305,1,6,3.0,0,0.0
+72279,Carlos Eduardo Lecciolle Thomazella,Thomazella,Goleiro,gol,Mirassol,MIR,2305,1,6,2.0,0,0.0
+51413,Walter Leandro Capeloza Artune,Walter,Goleiro,gol,Mirassol,MIR,2305,1,6,5.26,3,3.1
+73318,Daniel Fortunato Borges,Daniel Borges,Lateral,lat,Mirassol,MIR,2305,2,6,4.0,0,0.0
+91639,Igor Aquino da Silva,Igor Cariús,Lateral,lat,Mirassol,MIR,2305,2,6,2.94,1,1.0
+106708,Igor Marques Paciência Cardoso,Igor Formiga,Lateral,lat,Mirassol,MIR,2305,2,6,6.65,3,4.4
+78850,Reinaldo Manoel da Silva,Reinaldo,Lateral,lat,Mirassol,MIR,2305,2,6,10.89,3,0.6
+86410,Victor Luis Chuab Zamblauskas,Victor Luis,Lateral,lat,Mirassol,MIR,2305,2,6,4.0,0,0.0
+87742,Antônio Francisco Moura Neto,Neto Moura,Meia,mei,Mirassol,MIR,2305,4,6,3.87,2,0.45
+68708,Carlos Eduardo de Oliveira Alves,Eduardo,Meia,mei,Mirassol,MIR,2305,4,5,6.9,3,4.2
+115986,Denilson Alves Borges,Denilson,Meia,mei,Mirassol,MIR,2305,4,6,4.74,1,1.4
+82407,Francisco Hyun-Sol Kim,Chico Kim,Meia,mei,Mirassol,MIR,2305,4,6,4.0,0,0.0
+105903,José Aldo Soares de Oliveira Filho,Aldo Filho,Meia,mei,Mirassol,MIR,2305,4,6,4.09,3,1.67
+81121,Lucas Andrés Mugni,Lucas Mugni,Meia,mei,Mirassol,MIR,2305,4,6,7.0,0,0.0
+97520,Shaylon Kallyson Cardozo - Cardoso,Shaylon,Meia,mei,Mirassol,MIR,2305,4,6,5.0,0,0.0
+83263,Yuri Lima Lara,Yuri Lara,Meia,mei,Mirassol,MIR,2305,4,6,4.65,3,2.2
+104027,Rafael Silva Guanaes,Rafael Guanaes,Técnico,tec,Mirassol,MIR,2305,6,6,7.0,3,4.67
+91251,Antônio Josenildo Rodrigues de Oliveira,Rodrigues,Zagueiro,zag,Mirassol,MIR,2305,3,6,4.11,1,2.0
+97460,João Victor Carroll Santana - Caroll,João Victor,Zagueiro,zag,Mirassol,MIR,2305,3,6,5.46,3,2.63
+94514,Lucas da Cruz Oliveira,Lucas Oliveira,Zagueiro,zag,Mirassol,MIR,2305,3,6,4.0,0,0.0
+101908,Willian Estefani Machado,Willian Machado,Zagueiro,zag,Mirassol,MIR,2305,3,6,4.89,3,2.9
+145436,Erick Machado Belé,Belé,Atacante,ata,Palmeiras,PAL,275,5,6,3.0,0,0.0
+113103,José Manuel Alberto López,Flaco López,Atacante,ata,Palmeiras,PAL,275,5,7,14.43,4,5.5
+130612,Luighi Hanri Sousa Santos,Luighi,Atacante,ata,Palmeiras,PAL,275,5,6,2.89,3,0.57
+99818,Paulo Henrique Sampaio Filho,Paulinho,Atacante,ata,Palmeiras,PAL,275,5,6,15.0,0,0.0
+112863,Ramón Sosa Acosta,Ramón Sosa,Atacante,ata,Palmeiras,PAL,275,5,6,7.18,4,3.9
+130608,Riquelme Fillipi Marinho de Souza,Riquelme Fillipi,Atacante,ata,Palmeiras,PAL,275,5,6,0.71,1,-0.3
+114802,Vitor Hugo Roque Ferreira,Vitor Roque,Atacante,ata,Palmeiras,PAL,275,5,7,21.71,4,11.8
+104084,Carlos Miguel dos Santos Pereira,Carlos Miguel,Goleiro,gol,Palmeiras,PAL,275,1,7,7.65,4,3.35
+68872,Marcelo Lomba do Nascimento,Marcelo Lomba,Goleiro,gol,Palmeiras,PAL,275,1,6,4.0,0,0.0
+124526,Agustín Giay,Giay,Lateral,lat,Palmeiras,PAL,275,2,6,5.3,3,0.97
+145404,Arthur Gabriel Santana Marcolino,Arthur,Lateral,lat,Palmeiras,PAL,275,2,6,0.71,1,-0.3
+111832,Jefté Vital da Silva Dias,Jefté,Lateral,lat,Palmeiras,PAL,275,2,6,3.42,1,0.0
+102130,Joaquín Piquerez Moreira,Piquerez,Lateral,lat,Palmeiras,PAL,275,2,7,10.94,4,6.68
+105175,Khellven Douglas Silva Oliveira,Khellven,Lateral,lat,Palmeiras,PAL,275,2,7,5.1,4,1.6
+141451,Allan Andrade Elias,Allan,Meia,mei,Palmeiras,PAL,275,4,7,16.47,4,8.95
+89274,Andreas Hugo Hoelgebaum Pereira,Andreas Pereira,Meia,mei,Palmeiras,PAL,275,4,7,15.82,4,9.8
+108683,Emiliano Martínez Toranza,Emiliano Martínez,Meia,mei,Palmeiras,PAL,275,4,6,5.0,0,0.0
+70592,Felipe Anderson Pereira Gomes,Felipe Anderson,Meia,mei,Palmeiras,PAL,275,4,6,8.01,1,0.0
+99815,Jhon Adolfo Arias Andrade,Arias,Meia,mei,Palmeiras,PAL,275,4,2,15.28,1,2.7
+136156,Larson Torna Ferreira dos Santos,Larson,Meia,mei,Palmeiras,PAL,275,4,6,2.54,1,0.0
+84674,Lucas Evangelista Santana de Oliveira,Lucas Evangelista,Meia,mei,Palmeiras,PAL,275,4,6,6.93,2,2.5
+146623,Luis Felipe Pacheco da Costa,Luis Pacheco,Meia,mei,Palmeiras,PAL,275,4,6,2.54,1,0.0
+93790,Marlon Rodrigues Freitas,Marlon Freitas,Meia,mei,Palmeiras,PAL,275,4,7,5.61,4,0.93
+105647,Maurício Magalhães Prado,Maurício,Meia,mei,Palmeiras,PAL,275,4,2,7.0,4,3.67
+110506,Abel Fernando Moreira Ferreira,Abel Ferreira,Técnico,tec,Palmeiras,PAL,275,6,7,12.42,4,7.13
+104085,Bruno de Lara Fuchs,Bruno Fuchs,Zagueiro,zag,Palmeiras,PAL,275,3,6,8.0,0,0.0
+71684,Gustavo Raúl Gómez Portillo,Gustavo Gómez,Zagueiro,zag,Palmeiras,PAL,275,3,7,11.84,4,6.4
+133679,Luis Gustavo Roncholeta Benedetti - Luiz,Benedetti,Zagueiro,zag,Palmeiras,PAL,275,3,6,3.0,0,0.0
+97653,Murilo Cerqueira Paim,Murilo,Zagueiro,zag,Palmeiras,PAL,275,3,7,7.57,4,4.67
+101254,Alef Mangueira Severino Pereira,Alef Manga,Atacante,ata,Remo,REM,364,5,7,10.15,4,9.45
+96831,Carlos Moisés de Lima,Carlinhos,Atacante,ata,Remo,REM,364,5,6,3.5,0,-1.0
+107700,Eduardo de Queiroz Melo,Eduardo Melo,Atacante,ata,Remo,REM,364,5,5,2.13,1,1.4
+148109,Filipe Lima de Oliveira,Filipe Lima,Atacante,ata,Remo,REM,364,5,6,1.0,0,0.0
+105048,Jandir Breno Souza Silva,Jajá,Atacante,ata,Remo,REM,364,5,6,2.85,1,2.8
+146040,João Pedro Sousa Silva,João Pedro,Atacante,ata,Remo,REM,364,5,7,3.78,4,2.7
+142593,Michael Nicolás Ferreira Berrondo,Nicolás Ferreira,Atacante,ata,Remo,REM,364,5,6,3.0,0,0.0
+141991,Paulo Sérgio da Costa Evangelista Junior,Tico,Atacante,ata,Remo,REM,364,5,6,1.0,0,0.0
+147864,Rafael Monti Azpiazú,Rafael Monti,Atacante,ata,Remo,REM,364,5,6,4.0,0,0.0
+88136,Ivan Quaresma da Silva,Ivan,Goleiro,gol,Remo,REM,364,1,6,4.0,0,0.0
+141385,João Victor Ferreira da Silva,João Victor,Goleiro,gol,Remo,REM,364,1,6,1.0,0,0.0
+82730,Marcelo Rangel da Rosa,Marcelo Rangel,Goleiro,gol,Remo,REM,364,1,7,4.92,4,3.2
+141386,Marcos Alexandre Ferreira Campos Filho,Marcos Alexandre,Goleiro,gol,Remo,REM,364,1,6,1.0,0,0.0
+83074,Ygor Vinhas Oliveira Lima,Ygor Vinhas,Goleiro,gol,Remo,REM,364,1,6,3.0,0,0.0
+114308,Braian Ezequiel Cufré,Cufré,Lateral,lat,Remo,REM,364,2,7,3.45,1,-0.3
+104257,João Lucas de Almeida Carvalho,João Lucas,Lateral,lat,Remo,REM,364,2,7,5.38,4,2.87
+97795,Marcelo Rodrigues Souza,Marcelinho,Lateral,lat,Remo,REM,364,2,7,2.17,2,-0.15
+95555,Sávio Antônio Alves,Sávio,Lateral,lat,Remo,REM,364,2,6,5.08,1,4.5
+143455,Darilson Gama Amador,PH Gama,Meia,mei,Remo,REM,364,4,6,2.0,0,0.0
+111945,Diego Manuel Hernández González,Diego Hernández,Meia,mei,Remo,REM,364,4,6,3.92,2,1.75
+122554,Francisco José Freire de Freitas,Freitas,Meia,mei,Remo,REM,364,4,6,1.0,0,0.0
+112939,Franco Catarozzi Parafita,Catarozzi,Meia,mei,Remo,REM,364,4,6,5.41,1,0.9
+97735,Giovanni Fernando Confreste Pavani - Cofreste,Giovanni Pavani,Meia,mei,Remo,REM,364,4,6,2.98,1,1.5
+80196,Glaybson Yago Souza Lisboa,Yago Pikachu,Meia,mei,Remo,REM,364,4,6,5.93,4,2.87
+98224,Jaderson Flores dos Reis,Jáderson,Meia,mei,Remo,REM,364,4,5,3.87,1,1.7
+102911,José Ricardo Araújo Fernandes,Zé Ricardo,Meia,mei,Remo,REM,364,4,6,4.22,4,3.48
+86859,José Welison da Silva - Zé,José Welison,Meia,mei,Remo,REM,364,4,6,2.48,3,-0.2
+113125,Leonel Marcelo Picco,Picco,Meia,mei,Remo,REM,364,4,7,8.38,3,6.93
+84708,Panagiotis Tachtsidis,Panagiotis,Meia,mei,Remo,REM,364,4,6,3.0,0,0.0
+83433,Patrick Bezerra do Nascimento,Patrick,Meia,mei,Remo,REM,364,4,5,4.36,2,1.4
+107172,Patrick de Paula Carreiro,Patrick de Paula,Meia,mei,Remo,REM,364,4,7,7.19,4,6.05
+148103,Rafael Soares de Sousa,Rafael Soares,Meia,mei,Remo,REM,364,4,6,1.0,0,0.0
+87552,Vitor Frezarin Bueno,Vitor Bueno,Meia,mei,Remo,REM,364,4,7,7.8,3,4.7
+85315,Víctor Danilo Cantillo Jiménez,Cantillo,Meia,mei,Remo,REM,364,4,6,5.0,0,0.0
+117338,Yago de Paula Ferreira,Yago Ferreira,Meia,mei,Remo,REM,364,4,6,2.0,0,0.0
+145782,Cristian Marcelo González Tassano,Tassano,Zagueiro,zag,Remo,REM,364,3,6,3.0,0,0.0
+122441,Kayky Henrique Almeida Brandão da Silva,Kayky Almeida,Zagueiro,zag,Remo,REM,364,3,6,2.59,4,1.98
+100342,Leonardo de Andrade Silva,Léo Andrade,Zagueiro,zag,Remo,REM,364,3,7,4.79,4,2.95
+70666,Marllon Gonçalves Jerônimo Borges,Marllon,Zagueiro,zag,Remo,REM,364,3,7,6.1,4,4.03
+112367,Thalisson Gabriel Pereira Moreira,Thalisson Gabriel,Zagueiro,zag,Remo,REM,364,3,6,3.0,0,0.0
+90846,William Klaus - Willian,Klaus,Zagueiro,zag,Remo,REM,364,3,6,4.0,0,0.0
+145036,Fernando Pradella Rocha,Fernando Pradella,Atacante,ata,Santos,SAN,277,5,6,0.82,1,0.0
+83257,Gabriel Barbosa Almeida,Gabriel,Atacante,ata,Santos,SAN,277,5,6,8.38,1,2.1
+118775,Lautaro Ariel Díaz,Lautaro Díaz,Atacante,ata,Santos,SAN,277,5,6,5.43,3,2.1
+133673,Mateus Xavier de Sousa,Mateus Xavier,Atacante,ata,Santos,SAN,277,5,6,2.0,0,0.0
+104666,Moisés Vieira da Veiga,Moisés,Atacante,ata,Santos,SAN,277,5,6,5.61,2,3.05
+148206,Nadson Juan Maia da Silva de Souza,Nadson,Atacante,ata,Santos,SAN,277,5,6,1.0,0,0.0
+142867,Robson de Souza Júnior,Robinho Jr.,Atacante,ata,Santos,SAN,277,5,6,3.27,1,0.0
+91607,Ronielson da Silva Barbosa,Rony,Atacante,ata,Santos,SAN,277,5,6,6.58,3,2.0
+113690,Diógenes Vinícius da Silva,Diógenes,Goleiro,gol,Santos,SAN,277,1,6,2.0,0,0.0
+103056,Gabriel Nascimento Rezende Brazão - Resende,Gabriel Brazão,Goleiro,gol,Santos,SAN,277,1,6,4.58,4,-0.38
+102975,Gonzalo Daniel Escobar,Escobar,Lateral,lat,Santos,SAN,277,2,6,6.97,1,5.2
+95466,Igor Vinícius de Souza,Igor Vinícius,Lateral,lat,Santos,SAN,277,2,6,9.36,3,6.33
+130811,João Victor de Souza Menezes,Souza,Lateral,lat,Santos,SAN,277,2,6,8.0,0,0.0
+81150,Mayke Rocha de Oliveira,Mayke,Lateral,lat,Santos,SAN,277,2,6,4.67,1,1.2
+141868,Vinicius Rodrigues Lira,Vinicius Lira,Lateral,lat,Santos,SAN,277,2,6,4.21,3,2.93
+102256,Benjamín Rollheiser,Rollheiser,Meia,mei,Santos,SAN,277,4,6,6.27,3,0.83
+101807,Christian Gabriel Oliva Giménez,Oliva,Meia,mei,Santos,SAN,277,4,6,5.0,0,0.0
+141754,Gabriel Morais Silva Bontempo,Gabriel Bontempo,Meia,mei,Santos,SAN,277,4,6,3.82,4,1.4
+103767,Gabriel Vinícius Menino,Gabriel Menino,Meia,mei,Santos,SAN,277,4,6,9.43,4,6.47
+141776,Gustavo Henrique Pereira,Gustavo Henrique,Meia,mei,Santos,SAN,277,4,6,2.0,0,0.0
+82455,José Rafael Vivian,Zé Rafael,Meia,mei,Santos,SAN,277,4,6,9.52,3,6.97
+77777,João Felipe Schmidt Urbano,João Schmidt,Meia,mei,Santos,SAN,277,4,6,4.93,4,1.85
+115025,Miguel Àngel Terceros,Miguelito,Meia,mei,Santos,SAN,277,4,6,4.04,4,1.9
+63007,Neymar da Silva Santos Júnior,Neymar,Meia,mei,Santos,SAN,277,4,6,24.24,1,19.2
+87470,Thaciano Mickael da Silva,Thaciano,Meia,mei,Santos,SAN,277,4,6,8.6,2,6.55
+74187,Tomás Eduardo Rincón Hernández,Rincón,Meia,mei,Santos,SAN,277,4,6,4.0,0,0.0
+78478,Willian Souza Arão da Silva,Willian Arão,Meia,mei,Santos,SAN,277,4,6,6.31,1,0.2
+126471,Álvaro Martín Barreal,Barreal,Meia,mei,Santos,SAN,277,4,6,12.81,4,6.43
+104754,Juan Pablo Vojvoda Rizzo,Juan Vojvoda,Técnico,tec,Santos,SAN,277,6,6,8.61,4,4.74
+108469,Adonis Uriel Frías,Adonis Frías,Zagueiro,zag,Santos,SAN,277,3,6,4.55,2,-0.05
+91866,José Ivaldo Almeida Silva,Zé Ivaldo,Zagueiro,zag,Santos,SAN,277,3,6,7.34,1,6.0
+93372,João Othávio Basso,João Basso,Zagueiro,zag,Santos,SAN,277,3,6,4.44,2,2.65
+145563,João Paulo Ananias Bento,João Ananias,Zagueiro,zag,Santos,SAN,277,3,6,1.0,0,0.0
+84847,Luan Peres Petroni,Luan Peres,Zagueiro,zag,Santos,SAN,277,3,6,4.45,4,1.25
+101290,Aldemir dos Santos Ferreira,Ferreira,Atacante,ata,São Paulo,SAO,276,5,6,7.29,2,2.0
+131617,André Oliveira e Silva,André Silva,Atacante,ata,São Paulo,SAO,276,5,6,8.0,0,0.0
+108588,Gonzalo Andrés Tapia Dubournais,Tapia,Atacante,ata,São Paulo,SAO,276,5,6,5.47,4,2.68
+89840,Jonathan Calleri,Calleri,Atacante,ata,São Paulo,SAO,276,5,7,12.48,4,6.6
+141609,Lucca Marques Alencar,Lucca,Atacante,ata,São Paulo,SAO,276,5,6,3.0,0,0.0
+80287,Luciano da Rocha Neves,Luciano,Atacante,ata,São Paulo,SAO,276,5,7,17.05,3,7.7
+141614,Paulo Sérgio Venuto Bezerra,Paulinho,Atacante,ata,São Paulo,SAO,276,5,6,2.0,0,0.0
+140542,Ryan Francisco Rodrigues dos Santos Silva,Ryan Francisco,Atacante,ata,São Paulo,SAO,276,5,5,5.0,0,0.0
+106028,Carlos Miguel Coronel,Coronel,Goleiro,gol,São Paulo,SAO,276,1,6,5.0,0,0.0
+68928,Rafael Pires Monteiro,Rafael,Goleiro,gol,São Paulo,SAO,276,1,7,9.45,4,5.25
+117818,Young Navarro Moraes,Young,Goleiro,gol,São Paulo,SAO,276,1,6,3.0,0,0.0
+77656,Cédric Ricardo Alves Soares,Cédric Soares,Lateral,lat,São Paulo,SAO,276,2,6,5.72,1,2.3
+104758,Enzo Hernán Díaz,Enzo Díaz,Lateral,lat,São Paulo,SAO,276,2,7,11.33,3,8.53
+82775,Lucas Ramon Batista Silva,Lucas Ramon,Lateral,lat,São Paulo,SAO,276,2,7,9.22,1,8.8
+141611,Maik Gomes Viegas,Maik,Lateral,lat,São Paulo,SAO,276,2,6,6.23,3,4.03
+80570,Wendell Nascimento Borges,Wendell,Lateral,lat,São Paulo,SAO,276,2,6,8.9,1,7.0
+81845,Alisson Euler de Freitas Castro,Alisson,Meia,mei,São Paulo,SAO,276,4,6,6.0,0,0.0
+123360,Cauly Oliveira Souza,Cauly,Meia,mei,São Paulo,SAO,276,4,6,8.97,1,9.5
+107873,Damián Josué Bobadilla Benítez,Bobadilla,Meia,mei,São Paulo,SAO,276,4,7,8.18,4,2.83
+85403,Daniel de Oliveira Sertanejo,Danielzinho,Meia,mei,São Paulo,SAO,276,4,7,8.07,3,5.2
+148215,Djhordney Ferreira,Djhordney,Meia,mei,São Paulo,SAO,276,4,6,0.64,1,-1.6
+124674,Felipe Negrucci Berdague,Felipe Negrucci,Meia,mei,São Paulo,SAO,276,4,6,2.0,0,0.0
+102909,Luan Vinícius da Silva Santos,Luan,Meia,mei,São Paulo,SAO,276,4,6,3.48,2,0.75
+70164,Lucas Rodrigues Moura da Silva,Lucas Moura,Meia,mei,São Paulo,SAO,276,4,7,9.13,4,3.73
+106294,Marcos Antônio Silva Santos,Marcos Antônio,Meia,mei,São Paulo,SAO,276,4,7,7.07,4,2.6
+113359,Pablo Gonçalves Maia Fortunato,Pablo Maia,Meia,mei,São Paulo,SAO,276,4,6,5.39,4,1.85
+141615,Pedro Henrique Ferreira da Silva,Pedro Ferreira,Meia,mei,São Paulo,SAO,276,4,6,1.04,1,0.5
+103912,Hernán Jorge Crespo,Hernán Crespo,Técnico,tec,São Paulo,SAO,276,6,7,9.83,4,6.98
+99889,Alan Javier Franco,Alan Franco,Zagueiro,zag,São Paulo,SAO,276,3,6,6.74,4,3.45
+104075,José Sabino Chagas Monteiro,Sabino,Zagueiro,zag,São Paulo,SAO,276,3,7,7.26,3,5.53
+78946,Matheus Dória Macedo,Dória,Zagueiro,zag,São Paulo,SAO,276,3,6,7.0,0,0.0
+105300,Nahuel Adolfo Ferraresi Hernández,Ferraresi,Zagueiro,zag,São Paulo,SAO,276,3,2,7.57,2,3.1
+63008,Rafael Toloi,Rafael Tolói,Zagueiro,zag,São Paulo,SAO,276,3,6,8.5,1,10.6
+91573,Robert Abel Arboleda Escobar,Arboleda,Zagueiro,zag,São Paulo,SAO,276,3,2,10.72,3,5.53
+141406,Andrey Fernandes de Oliveira Nunes,Andrey Fernandes,Atacante,ata,Vasco,VAS,267,5,6,1.41,1,1.7
+99789,Brenner Souza da Silva,Brenner,Atacante,ata,Vasco,VAS,267,5,6,8.23,3,3.57
+116706,Carlos Andrés Gómez Hinestroza,Andrés Gómez,Atacante,ata,Vasco,VAS,267,5,7,11.41,4,7.75
+110144,Claudio Paul Spinelli,Spinelli,Atacante,ata,Vasco,VAS,267,5,7,6.14,2,1.25
+90309,David Corrêa da Fonseca,David,Atacante,ata,Vasco,VAS,267,5,6,4.25,2,0.7
+147883,João Vitor Fonseca da Silva - JV Mutano,João Vitor,Atacante,ata,Vasco,VAS,267,5,6,0.72,2,0.0
+110598,Marino Hinestroza Angulo,Marino Hinestroza,Atacante,ata,Vasco,VAS,267,5,2,7.08,3,1.47
+99198,Pablo Vegetti,Vegetti,Atacante,ata,Vasco,VAS,267,5,6,11.0,0,0.0
+95936,Daniel Cerântula Fuzato,Daniel Fuzato,Goleiro,gol,Vasco,VAS,267,1,6,2.0,0,0.0
+87008,Leonardo César Jardim,Léo Jardim,Goleiro,gol,Vasco,VAS,267,1,7,6.78,4,0.77
+130280,Phillipe Gabriel Pires de Oliveira,Phillipe Gabriel,Goleiro,gol,Vasco,VAS,267,1,6,1.0,0,0.0
+99213,José Luis Rodríguez Bebanz,Puma Rodríguez,Lateral,lat,Vasco,VAS,267,2,6,7.13,3,5.87
+105584,Lucas Piton Crivellaro,Lucas Piton,Lateral,lat,Vasco,VAS,267,2,2,6.02,4,1.3
+116065,Luís Eduardo Soares da Silva,Cuiabano,Lateral,lat,Vasco,VAS,267,2,2,8.78,1,2.0
+93716,Paulo Henrique de Oliveira Alves,Paulo Henrique,Lateral,lat,Vasco,VAS,267,2,7,9.75,2,3.6
+111682,Adson Ferreira Soares,Adson,Meia,mei,Vasco,VAS,267,4,6,6.0,0,0.0
+122485,Cauan Lucas Barros da Luz,Barros,Meia,mei,Vasco,VAS,267,4,7,11.7,4,10.12
+86686,Danilo das Neves Pinheiro,Tchê Tchê,Meia,mei,Vasco,VAS,267,4,6,5.34,1,0.0
+101594,Hugo Moura Arruda da Silva,Hugo Moura,Meia,mei,Vasco,VAS,267,4,6,3.39,1,0.0
+81091,Jair Rodrigues Júnior,Jair,Meia,mei,Vasco,VAS,267,4,6,6.0,0,0.0
+128433,Johan Rojas Echavarría,Johan Rojas,Meia,mei,Vasco,VAS,267,4,7,4.54,4,1.2
+129666,João Pedro Murilo de Paula Morais,JP,Meia,mei,Vasco,VAS,267,4,6,1.0,0,0.0
+118752,Mateus Carvalho dos Santos,Mateus Carvalho,Meia,mei,Vasco,VAS,267,4,5,4.0,0,0.0
+115100,Matheus França de Oliveira,Matheus França,Meia,mei,Vasco,VAS,267,4,6,3.55,1,0.8
+142279,Nuno Gonçalo Rocha Moreira,Nuno Moreira,Meia,mei,Vasco,VAS,267,4,2,6.04,4,1.9
+71123,Thiago Henrique Mendes Ribeiro,Thiago Mendes,Meia,mei,Vasco,VAS,267,4,7,6.13,4,2.5
+102887,Bruno Amorim Lazaroni,Bruno Lazaroni,Técnico,tec,Vasco,VAS,267,6,7,8.7,1,4.48
+118655,Alan Gabriel Saldivia Vázquez,Saldivia,Zagueiro,zag,Vasco,VAS,267,3,7,6.41,1,2.8
+97095,Carlos Eccehomo Cuesta Figueroa,Carlos Cuesta,Zagueiro,zag,Vasco,VAS,267,3,6,6.0,3,0.7
+115141,Lucas de Freitas Molarinho Chagas,Lucas Freitas,Zagueiro,zag,Vasco,VAS,267,3,6,4.0,0,0.0
+117330,Robert Renan Alves Barbosa,Robert Renan,Zagueiro,zag,Vasco,VAS,267,3,7,6.15,4,1.92
+97810,Erick de Arruda Serafim,Erick,Atacante,ata,Vitória,VIT,287,5,7,8.75,2,6.5
+104134,Fabrício do Rosário dos Santos,Fabri,Atacante,ata,Vitória,VIT,287,5,6,6.52,2,6.55
+109138,Javier Enrique Delgado Saverio,Kike Saverio,Atacante,ata,Vitória,VIT,287,5,6,5.0,0,0.0
+134678,Lawan Kennyd Gabriel Santos,Lawan,Atacante,ata,Vitória,VIT,287,5,6,0.74,1,-0.3
+97911,Lucas Rodrigues da Silva,Lucas Silva,Atacante,ata,Vitória,VIT,287,5,6,4.0,0,0.0
+130892,Luiz Miguel Borges de Paula,Luis Miguel,Atacante,ata,Vitória,VIT,287,5,6,1.0,0,0.0
+68952,Mário Sérgio Santos Costa,Marinho,Atacante,ata,Vitória,VIT,287,5,6,6.0,0,0.0
+42222,Osvaldo Lourenço Filho,Osvaldo,Atacante,ata,Vitória,VIT,287,5,6,4.37,1,0.8
+95550,Pedro Henrique Alves de Almeida,Pedro Henrique,Atacante,ata,Vitória,VIT,287,5,5,3.0,0,0.0
+92696,Renato Kayzer de Souza,Renato Kayzer,Atacante,ata,Vitória,VIT,287,5,7,8.56,1,10.4
+111951,Renzo López Patrón,Renzo López,Atacante,ata,Vitória,VIT,287,5,5,3.0,0,0.0
+107859,Alexandre Fintelman de Mello Ribeiro da Silva,Fintelman,Goleiro,gol,Vitória,VIT,287,1,5,2.0,0,0.0
+70449,Gabriel Vasconcelos Ferreira,Gabriel,Goleiro,gol,Vitória,VIT,287,1,6,5.6,2,2.2
+104118,Lucas Willians Assis Arcanjo,Lucas Arcanjo,Goleiro,gol,Vitória,VIT,287,1,7,4.0,0,0.0
+97645,Thiago Couto Wenceslau,Thiago Couto,Goleiro,gol,Vitória,VIT,287,1,6,3.0,0,0.0
+107075,Yuri Sena dos Reis Batista,Yuri Sena,Goleiro,gol,Vitória,VIT,287,1,6,1.0,0,0.0
+101752,Claudio Coelho Salvático,Claudinho,Lateral,lat,Vitória,VIT,287,2,5,4.0,0,0.0
+116461,Jamerson Santos de Jesus,Jamerson,Lateral,lat,Vitória,VIT,287,2,6,5.55,1,6.5
+100848,Luan Cândido de Almeida,Luan Cândido,Lateral,lat,Vitória,VIT,287,2,6,4.56,1,0.9
+111879,Mateus da Silva Duarte,Mateus Silva,Lateral,lat,Vitória,VIT,287,2,7,4.95,2,4.85
+113157,Nathan Gabriel de Souza Mendes,Nathan Mendes,Lateral,lat,Vitória,VIT,287,2,6,3.97,1,1.6
+145510,Paulo Roberto dos Santos Almeida,Paulo Roberto,Lateral,lat,Vitória,VIT,287,2,6,3.0,0,0.0
+101597,Ramon Ramos Lima,Ramon,Lateral,lat,Vitória,VIT,287,2,7,6.84,2,5.85
+93411,Aitor Cantalapiedra Fernández,Cantalapiedra,Meia,mei,Vitória,VIT,287,4,2,6.37,2,2.5
+90588,Caique de Jesus Gonçalves,Caíque,Meia,mei,Vitória,VIT,287,4,2,5.0,2,1.3
+130620,Edenílson Santos Nascimento Filho,Edenílson,Meia,mei,Vitória,VIT,287,4,2,3.0,0,0.0
+104330,Eduardo Marcelo Rodrigues Nunes,Dudu,Meia,mei,Vitória,VIT,287,4,6,5.01,2,3.95
+99440,Gabriel Baralhas dos Santos,Baralhas,Meia,mei,Vitória,VIT,287,4,7,8.17,2,6.8
+130847,José Breno Silva Costa,Zé Breno,Meia,mei,Vitória,VIT,287,4,6,2.0,0,0.0
+103388,Leandro Emmanuel Martínez,Emmanuel Martínez,Meia,mei,Vitória,VIT,287,4,7,5.0,0,0.0
+90703,Matheus Martins Fogaça de Paulo,Matheuzinho,Meia,mei,Vitória,VIT,287,4,7,5.44,2,2.0
+122413,Pablo Santos de Alcântara,Pablo Baianinho,Meia,mei,Vitória,VIT,287,4,6,1.0,0,0.0
+100969,Ronald dos Santos Lopes,Ronald Lopes,Meia,mei,Vitória,VIT,287,4,6,5.0,0,0.0
+145387,Rúben Ismael Valente Ramos,Rúben Ismael,Meia,mei,Vitória,VIT,287,4,5,4.0,0,0.0
+92180,Jair Ventura,Jair Ventura,Técnico,tec,Vitória,VIT,287,6,7,7.18,2,6.33
+102340,Carlos de Menezes Júnior,Cacá,Zagueiro,zag,Vitória,VIT,287,3,6,5.0,0,0.0
+96793,Cleidson Andrade de Souza Silva,Camutanga,Zagueiro,zag,Vitória,VIT,287,3,7,7.42,1,9.5
+83786,Hueglo dos Santos Neris,Neris,Zagueiro,zag,Vitória,VIT,287,3,2,3.08,1,1.5
+90943,José Marcos Alves Luis,Zé Marcos,Zagueiro,zag,Vitória,VIT,287,3,6,5.14,2,2.75
+105842,Lucas Eduardo Ribeiro de Souza,Edu,Zagueiro,zag,Vitória,VIT,287,3,5,4.0,0,0.0
+97906,Riccieli Eduardo da Silva Júnior,Riccieli,Zagueiro,zag,Vitória,VIT,287,3,6,4.85,2,3.5
