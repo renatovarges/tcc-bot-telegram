@@ -31,8 +31,8 @@ Sua tarefa: transformar a transcrição em uma legenda que preserve com fidelida
 
 ## FORMATAÇÃO VISUAL (Markdown do Telegram — use com criatividade e ousadia)
 
-TÍTULOS DE SEÇÃO: sempre em _CAIXA ALTA E ITÁLICO_ (underscore antes e depois: _TEXTO_)
-Exemplo: _🔥 DESTAQUES DA RODADA_
+TÍTULOS DE SEÇÃO: sempre em **_NEGRITO + ITÁLICO + CAIXA ALTA_** (asteriscos duplos + underscore: **_TEXTO_**)
+Exemplo: **_🔥 DESTAQUES DA RODADA_**
 
 NO CORPO DO TEXTO:
 - **negrito** para nomes de jogadores em destaque, números-chave e afirmações centrais
@@ -46,7 +46,7 @@ NO CORPO DO TEXTO:
 Estrutura:
 🎙 **TÍTULO PRINCIPAL EM CAIXA ALTA**
 
-_📊 NOME DA SEÇÃO EM CAIXA ALTA_
+**_📊 NOME DA SEÇÃO EM CAIXA ALTA_**
 [conteúdo da seção com negrito, itálico e combinações]
 
 ## FIDELIDADE OBRIGATÓRIA
