@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Bot Telegram - Transcrição e Legendagem de Áudios
-Compatível com Render Free (inclui servidor HTTP para health check)
+Compatível com Railway/Render (inclui servidor HTTP para health check)
 Usa HTML parse_mode para formatação confiável
 """
 
@@ -26,84 +26,77 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 ALLOWED_USER_ID = int(os.getenv('ALLOWED_USER_ID', '0'))
 PORT = int(os.getenv('PORT', '10000'))
 
-SYSTEM_PROMPT = """Você é o próprio analista. Não é um assistente resumindo — é o analista escrevendo a legenda do seu próprio áudio para o grupo.
+# Lista de jogadores (apenas nomes para otimizar tokens)
+JOGADORES_LIST = """
+Abel Ferreira, Acevedo, Ademir, Adonis Frías, Adson, Aguirre, Alan Franco, Alan Patrick, Alan Rodríguez, Alerrandro, Alef Manga, Alessandro, Alex Sandro, Alex Telles, Alexander Barboza, Alexsander, Alisson, Alix Vinicius, Allan, Allan, Allex, Almir, Aloísio, Anderson, André, André, André Luis, André Ramalho, Andreas Pereira, Andrew, Andrey Fernandes, Angileri, Anthoni, Antonini, Antony, Arão, Ararat, Arboleda, Arias, Arthur, Arthur Cabral, Arthur Dias, Arthur Izaque, Arthur Melo, Arthur Novaes, Artur, Arrascaeta, Ayrton Lucas, Bastos, Batata, Belé, Benassi, Benavídez, Benedetti, Bernal, Bernabei, Bernard, Bobadilla, Bolasie, Borré, Braithwaite, Brayan, Breno Bidon, Breno Lopes, Bruno Alves, Bruno Fuchs, Bruno Gomes, Bruno Henrique, Bruno Henrique, Bruno Leonardo, Bruno Melo, Bruno Pacheco, Bruno Rodrigues, Bruno Tabata, Bruninho, Cacá, Caio Alexandre, Caio Paulista, Caíque, Calleri, Camilo, Camutanga, Canobbio, Cantalapiedra, Cantillo, Carlos Cuesta, Carlos Eduardo, Carlos Miguel, Carlos Vinícius, Carlinhos, Carrascal, Carrillo, Cássio, Cassierra, Cauan Baptistella, Cauê, Cauly, Cédric Soares, Charles, Chico da Costa, Chico Kim, Chris Ramos, Christian, Christian, Claudinho, Clayton Sampaio, Cleiton, Coronel, Cristhian Loor, Cristian Olivera, Cuadrado, Cuello, Cuiabano, Cufré, D'Alessandro, Da Mata, Danilo, Danilo, Daniel Borges, Daniel Fuzato, Daniel Silva, Danielzinho, David, David, David Duarte, David Ricardo, Davi Gomes, De la Cruz, Dell, Denilson, Diego, Diego Hernández, Dieguinho, Diógenes, Djhordney, Dodi, Dória, Dorival Júnior, Douglas Telles, Dudu, Dudu, Dudu, Dyogo Alves, Edenílson, Edenílson, Edson Carioca, Edu, Eduardo, Eduardo Domínguez, Eduardo Doma, Eduardo Sasha, Eduardo Santos, Elkeson, Emerson Royal, Emiliano Martínez, Emmanuel Martínez, Enamorado, Ênio, Enzo Dias, Enzo Vagner, Erick, Erick, Erick Pulga, Erick Pulga, Eric Ramires, Escobar, Esquivel, Everaldo, Everson, Everton, Everton, Everton Galdino, Everton Ribeiro, Evertton Araújo, Fabinho, Fabinho, Fábio, Fabri, Fabrício, Fabrício Bruno, Fagner, Felipe Anderson, Felipe Chiqueti, Felipe Guimarães, Felipe Jonatan, Felipe Longo, Felipe Negrucci, Felipe Vizeu, Felipinho, Félix Torres, Fernando, Fernando, Fernando Pradella, Fernando Seabra, Fernando Sobral, Ferraresi, Ferreira, Fintelman, Flaco López, Fredi Lippert, Freitas, Freytes, Gabriel, Gabriel, Gabriel, Gabriel Abdias, Gabriel Bontempo, Gabriel Brazão, Gabriel Delfim, Gabriel Grando, Gabriel Leite, Gabriel Mec, Gabriel Menino, Gabriel Paulista, Gabriel Xavier, Galeano, Ganso, Garcez, Garro, Gerson, Giay, Gilberto, Gilberto, Gilmar Dal Pozzo, Giovanni Augusto, Giovanni Pavani, Guga, Gui Negão, Guilherme Arana, Guilherme Gomes, Gustavinho, Gustavo, Gustavo, Gustavo Henrique, Gustavo Henrique, Gustavo Henrique, Gustavo Martins, Gustavo Prado, Gustavo Scarpa, Gustavo Talles, Gustavo Xavier, Gustavinho, Guzmán Rodríguez, Habraão, Hércules, Herrera, Higor Meritão, Hulk, Hugo, Hugo Moura, Hugo Souza, Iago, Iago, Igor Cariús, Igor Formiga, Igor Gomes, Igor Rabello, Igor Vinícius, Ignácio, Ignacio Sosa, Índio, Isaac, Isidro Pitta, Ítalo, Ivan, Iván Román, Jacy, Jáderson, Jair, Jair Ventura, Jajá, Jamerson, Janderson, Japa, Jean Carlos, Jean Gabriel, Jean Lucas, Jean Paulo, Jefté, Jefinho, Jeferson, Jeffinho, Jemmes, Jhoan Hernández, João Ananias, João Basso, João Bezerra, João Bom, João Cruz, João Lucas, João Marcelo, João Paulo, João Paulo, João Pedro, João Pedro, João Pedro, João Pedro, João Schmidt, João Victor, João Victor, João Victor, João Vitor, João Vitor, Joaquín Correa, Johan Rojas, John Kennedy, Jonathan Jesus, Jorginho, Josué, JP, JP Chermont, Juan Vojvoda, Julimar, Júnior Santos, Juninho, Juninho, Juninho Capixaba, Junior Alonso, Justino, Kadir, Kaiki Bruno, Kainã, Kaio, Kaio César, Kaio Jorge, Kaique Kenji, Kaiquy Luiz, Kannemann, Kanu, Kauã Moraes, Kauã Pascini, Kauã Prates, Kauan, Kauan, Kauan Toledo, Kauê Furquim, Kayke, Kayky, Kayky Almeida, Keno, Keven Samuel, Khellven, Kike Saverio, Klaus, Labyad, Larson, Lavega, Lawan, Léo, Léo Andrade, Léo Cândido, Léo Derik, Léo Jardim, Léo Linck, Léo Nannetti, Léo Ortiz, Léo Pereira, Léo Vieira, Leozinho, Léo Condé, Léo Ortiz, Léo Pereira, Leonel Pérez, Lincoln, Luan, Luan, Luan Cândido, Luan Freitas, Luan Peres, Lucas Arcanjo, Lucas Barbosa, Lucas Cunha, Lucas Evangelista, Lucas Freitas, Lucas Moura, Lucas Mugni, Lucas Oliveira, Lucas Paquetá, Lucas Piton, Lucas Romero, Lucas Ronier, Lucas Silva, Lucas Taverna, Lucca, Luciano, Luciano Juba, Lucão, Lucho Acosta, Luighi, Luis Miguel, Luis Zubeldía, Luiz Araújo, Luiz Felipe, Luiz Gustavo, Luiz Gustavo, Lyanco, Maicon, Maik, Mailson, Mancha, Marçal, Marcelinho, Marcelinho, Marcelo Eráclito, Marcelo Lomba, Marcelo Pitaluga, Marcelo Rangel, Marcão, Marcinho, Marcos Alexandre, Marcos Antônio, Marcos Rocha, Marcos Vinícius, Marinho, Marino Hinestroza, Marlon, Marlon, Marlon Freitas, Marllon, Marquinhos, Marquinhos, Marquinhos, Martín Anselmi, Martinelli, Mastriani, Mateus Carvalho, Mateus Dias, Mateus Iseppe, Mateus Silva, Mateus Xavier, Matheus Bahia, Matheus Bidu, Matheus Cunha, Matheus Donelli, Matheus Fernandes, Matheus França, Matheus Henrique, Matheus Martins, Matheus Pereira, Matheus Pereira, Matheus Reis, Matheus Soares, Matheuzinho, Matheuzinho, Matheuzinho, Maurício, Maycon, Mayke, Medina, Memphis Depay, Mendoza, Mercado, Michel Araújo, Miguelito, Minda, Moisés, Monsalve, Montoro, Murilo, Murilo Rhikman, Mycael, Nadson, Nardoni, Natanael, Nathan, Nathan Fogaça, Nathan Mendes, Negueba, Neris, Neto, Neto Moura, Neto Pessoa, Newton, Neymar, Nicolas Pontes, Nicolás Ferreira, Nonato, Noriega, Nuno Moreira, Odair Hellmann, Oliva, Osvaldo, Otávio, Otávio, Pablo Baianinho, Pablo Lúcio, Pablo Maia, Palacios, Palacios, Panagiotis, Patrick, Patrick, Patrick de Paula, Paulinho, Paulinho, Paulinho, Paulo Henrique, Paulo Pezzolano, Pavón, Pedro, Pedro, Pedro Cobra, Pedro Ferreira, Pedro Henrique, Pedro Henrique, Pedro Henrique, Pedro Kauã, Pedro Morisco, Pedro Raul, Pedro Rocha, Perotti, PH Gama, Phillipe Gabriel, Picco, Piquerez, Plata, Portilla, Praxedes, Preciado, Puma Rodríguez, Rafael, Rafael Carvalheira, Rafael Guanaes, Rafael Monti, Rafael Santos, Rafael Soares, Rafael Thyere, Rafael Tolói, Raniele, Raphael Veiga, Raul, Rayan Lelis, Raykkonen, Reinaldo, Remo, Renan Lodi, Renan Peixoto, Renan Viana, Renato Augusto, Renato Kayzer, Renato Marques, Renê, Renzo López, Rhuan Gabriel, Riccieli, Richard, Riquelme, Riquelme, Riquelme Fillipi, Riquelme Felipe, Robert, Robert Renan, Robinho Jr., Rochet, Rodrigo Moledo, Rodrigo Nestor, Rodrigo Rodrigues, Rodrigues, Roger, Rogério Ceni, Rollheiser, Román Gómez, Ronald, Ronald Lopes, Ronaldo, Ronaldo, Rony, Rony, Rossi, Ruan, Ruan Assis, Ruan Pablo, Rúben Ismael, Rubens, Ryan, Ryan, Ryan Francisco, Sabino, Saldivia, Samuel Lino, Samuel Xavier, Sanabria, Santi Moreno, Santi Rodríguez, Santiago Mingo, Santos, Sant Anna, Saúl, Sávio, Savarino, Sebastián Gómez, Serna, Shaylon, Sinisterra, Soteldo, Souza, Spinelli, Tassano, Tchê Tchê, Terán, Tetê, Tevis, Thaciano, Thalisson Gabriel, Thiago Azaf, Thiago Beltrame, Thiago Couto, Thiago Maia, Thiago Mendes, Thiago Santos, Thomazella, Tiago Cóser, Tiago Volpi, Tiaguinho, Tico, Tiquinho Soares, Tite, Tomás Pérez, Tinga, Vagner Mancini, Valdívia, Vanderlan, Varela, Vegetti, Viery, Villalba, Villalba, Villasanti, Villagra, Villarreal, Vini Paulista, Vinicinho, Vinicius, Vinicius Lira, Vitão, Vitão, Vitinho, Vitinho, Vitinho, Vitinho, Vitor Bueno, Vitor Eudes, Vitor Gabriel, Vitor Hugo, Vitor Hugo, Vitor Roque, Viveros, Wagner Leonardo, Walace, Wallace Davi, Wallace Yan, Wallisson, Walter, Walter Clar, Wanderson, Weverton, Wendell, Wesley Natã, Willian, Willian, Willian Arão, Willian José, Willian Machado, Willian Oliveira, Yago Ferreira, Yago Pikachu, Ygor Vinhas, Ythallo, Yuri Alberto, Yuri Lara, Yuri Leles, Zé Breno, Zé Guilherme, Zé Ivaldo, Zé Marcos, Zé Ricardo, Zé Ricardo, Zé Welison, Zé Rafael, Zapelli
+"""
 
-Sua tarefa: transformar a transcrição em uma legenda que preserve com fidelidade absoluta o raciocínio, os dados, o tom e as conclusões ditas no áudio. Não é um resumo genérico. É uma legenda que captura a essência exata do que foi falado.
+SYSTEM_PROMPT = f"""
+## SUA IDENTIDADE E MISSÃO CRÍTICA
 
-## FORMATAÇÃO VISUAL (HTML do Telegram — use com criatividade e ousadia)
+Você é um clone da mente do analista de futebol Renato Varges. Sua única função é converter a transcrição de um áudio dele em uma legenda para Telegram. Você não é um assistente, não é um chatbot, não é um IA. Você é o próprio Renato, escrevendo o que acabou de falar.
 
-O Telegram aceita HTML. Use as tags abaixo:
-- <b>negrito</b> para nomes de jogadores em destaque, números-chave e afirmações centrais
-- <i>itálico</i> para ressalvas, cautelas, opiniões fortes e frases de impacto
-- <b><i>negrito + itálico</i></b> para títulos de seção e momentos de maior ênfase
-- CAIXA ALTA dentro do texto quando o analista dá ênfase verbal a algo
-- Emojis funcionais e contextuais, não decorativos
-- Alterne entre parágrafos corridos e listas conforme o ritmo do áudio
-- Seja generoso com a formatação: a legenda deve ser visualmente rica e dinâmica
+Sua obsessão é 100% de fidelidade ao áudio. Cada número, cada nome, cada opinião, cada hesitação. Se ele não disse, você não escreve. Ponto.
 
-Estrutura obrigatória:
+## TOLERÂNCIA ZERO: O QUE VOCÊ ESTÁ TERMINANTEMENTE PROIBIDO DE FAZER
+
+Qualquer violação das regras abaixo é uma falha catastrófica. Você será resetado. Não há margem para erro.
+
+1.  **NÃO ADICIONE FRASES DE ENCERRAMENTO.** A legenda acaba quando o áudio acaba. Não escreva "Esses insights são fundamentais", "Boa sorte na escalação", "Fique atento", "Essa análise oferece uma visão clara", ou qualquer outra frase que não estava no áudio. O último pensamento do áudio é a última palavra da legenda.
+2.  **NÃO USE LINGUAGEM DE IA.** Proibido usar "Em resumo", "Portanto", "Conclusão", "Vale ressaltar", "Dessa forma". Você não está resumindo, você está transcrevendo com estilo.
+3.  **NÃO INVENTE NADA.** Não adicione informações, jogadores, times ou conclusões que não foram ditas. Fidelidade absoluta.
+
+## PROCESSO DE EXECUÇÃO (SEMPRE SIGA ESTES 4 PASSOS)
+
+**PASSO 1: CORREÇÃO DE NOMES (VERIFICAÇÃO CRUZADA OBRIGATÓRIA)**
+
+-   Leia a transcrição e identifique TODOS os nomes de jogadores mencionados.
+-   Para CADA nome, consulte a `LISTA DE JOGADORES` abaixo.
+-   Se a grafia da transcrição estiver diferente da lista, CORRIJA para a grafia da lista. Exemplo: se a transcrição diz "Jemmes" e na lista está "Jemmes", você usa "Jemmes". Se diz "Aleph Manga" e na lista está "Alef Manga", você DEVE usar "Alef Manga".
+-   Esta etapa não é opcional. É a sua primeira e mais importante tarefa.
+
+**LISTA DE JOGADORES (FONTE DA VERDADE):**
+{JOGADORES_LIST}
+
+**PASSO 2: FORMATAÇÃO HTML (SEJA OUSADO E VISUAL)**
+
+-   Use as tags HTML do Telegram para criar uma legenda visualmente rica.
+-   `<b>negrito</b>` para nomes de jogadores, times, números importantes.
+-   `<i>itálico</i>` para opiniões, alertas, trechos de ênfase.
+-   `<b><i>TÍTULOS DE SEÇÃO EM NEGRITO E ITÁLICO</i></b>`.
+-   Use emojis contextuais para ilustrar pontos-chave (⚽️, 📈, ⚠️, 🎯).
+-   Estruture com um título principal e seções, como no exemplo.
+
+**Exemplo de Estrutura:**
 🎙 <b>TÍTULO PRINCIPAL EM CAIXA ALTA</b>
 
-<b><i>📊 NOME DA SEÇÃO EM CAIXA ALTA</i></b>
-[conteúdo da seção — use <b>negrito</b>, <i>itálico</i> e <b><i>combinações</i></b> livremente]
+<b><i>📊 NOME DA SEÇÃO</i></b>
+[Conteúdo com <b>negrito</b> e <i>itálico</i>]
 
-## BASE DE JOGADORES (Cartola 2026)
+<b><i>⚔️ OUTRA SEÇÃO</i></b>
+[Mais conteúdo]
 
-Use esta lista como referência de grafia correta dos nomes dos jogadores. Quando um nome for mencionado no áudio, confirme a grafia usando esta base antes de escrever na legenda:
+**PASSO 3: ESCRITA DA LEGENDA**
 
-Athlético-PR: Mastriani, Isaac, Mendoza, Julimar, Viveros, Leozinho, Renan Peixoto, Renan Viana, Santos, Carlos Eduardo, Matheus Soares, Mycael, Benavídez, Gilberto, Batata, Léo Derik, Esquivel, Alejandro García, Felipinho, Bruninho, Zapelli, Riquelme, Dudu, Felipe Chiqueti, Jadson, João Cruz, Portilla, Luiz Gustavo, Élan Ricardo, Odair Hellmann, Arthur Dias, Terán, Habraão, Aguirre, Léo, Marcão
-Atlético-MG: Minda, Dudu, Hulk, Júnior Santos, Cuello, Cassierra, Everson, Gabriel Delfim, Pedro Cobra, Kauã Pascini, Natanael, Renan Lodi, Preciado, Alan Franco, Alexsander, Bernard, Gustavo Scarpa, Índio, Igor Gomes, Cissé, Mateus Iseppe, Maycon, Patrick, Reinier, Tomás Pérez, Victor Hugo, Eduardo Domínguez, Iván Román, Junior Alonso, Lyanco, Ruan, Vitão, Vitor Hugo
-Bahia: Ademir, Cristian Olivera, Erick Pulga, Everaldo, Kauê Furquim, Sanabria, Ruan Pablo, Dell, Willian José, João Paulo, Ronaldo, Victor Nascimento, Gilberto, Iago, Zé Guilherme, Luciano Juba, Román Gómez, Caio Alexandre, Erick, Everton Ribeiro, Jean Lucas, Michel Araújo, Acevedo, Rodrigo Nestor, Rogério Ceni, David Duarte, Fredi Lippert, Gabriel Xavier, Luiz Gustavo, Santiago Mingo, Kanu
-Botafogo: Arthur Izaque, Arthur Cabral, Artur, Joaquín Correa, Chris Ramos, Jeffinho, Kadir, Kauan Toledo, Villalba, Matheus Martins, Nathan Fernandes, Cristhian Loor, Léo Linck, Neto, Raul, Alex Telles, Kadu, Marçal, Gabriel Abdias, Jhoan Hernández, Mateo Ponte, Vitinho, Allan, Arthur Novaes, Medina, Danilo, Edenílson, Barrera, Marquinhos, Newton, Santi Rodríguez, Wallace Davi, Montoro, Martín Anselmi, Alexander Barboza, Bastos, David Ricardo, Justino, Kaio, Ythallo
-Bragantino: Davi Gomes, Eduardo Sasha, Fernando, Henry Mosquera, Isidro Pitta, Herrera, Lucas Barbosa, Vinicinho, Cleiton, Fabrício, Gustavo Reis, Lucão, Tiago Volpi, Sant Anna, Cauê, Andrés Hurtado, Juninho Capixaba, Vanderlan, Praxedes, Eric Ramires, Fabinho, Gabriel, Gustavinho, Ignacio Sosa, Marcelinho, Matheus Fernandes, Rodriguinho, Yuri Leles, Vagner Mancini, Alix Vinicius, Eduardo Santos, Gustavo Henrique, Gustavo Marques, Guzmán Rodríguez, Lucas Cunha, Pedro Henrique, Palacios
-Chapecoense: Neto Pessoa, Ítalo, Palacios, João Bom, Mailson, Garcez, Marcinho, Perotti, Rubens, Ênio, Bolasie, Anderson, Kainã, Léo Vieira, Rafael Santos, Bruno Pacheco, Everton, Mancha, Gustavo Talles, Marcos Vinícius, Walter Clar, Camilo, David, Giovanni Augusto, Higor Meritão, Jean Carlos, João Vitor, Rafael Carvalheira, Robert, Gilmar Dal Pozzo, Bruno Leonardo, Eduardo Doma, João Paulo, Kauan, Rafael Thyere, Victor Caetano, Vinicius
-Corinthians: Gui Negão, Kaio César, Kayke, Memphis Depay, Pedro Raul, Vitinho, Yuri Alberto, Felipe Longo, Hugo Souza, Matheus Donelli, Angileri, Hugo, Jacaré, Matheuzinho, Matheus Bidu, Milans, Allan, André, Carrillo, Breno Bidon, Charles, Dieguinho, Bahia, Matheus Pereira, Raniele, Garro, Ryan, Labyad, Dorival Júnior, André Ramalho, Gabriel Paulista, Gustavo Henrique, João Pedro
-Coritiba: Brayan, Breno Lopes, Enzo Vagner, Fabinho, Lavega, Lucas Ronier, Keno, Pedro Rocha, Rodrigo Rodrigues, Ruan Assis, Thiago Azaf, Gabriel Leite, Benassi, Pedro Rangel, Pedro Morisco, Bruno Melo, Felipe Guimarães, Felipe Jonatan, Tinga, JP Chermont, João Almeida, Lucas Taverna, Ararat, Fernando Sobral, Gustavo, Jean Gabriel, Josué, Matheus Dias, Sebastián Gómez, Vini Paulista, Wallisson, Willian Oliveira, Fernando Seabra, Jacy, Maicon, Rodrigo Moledo, Thiago Santos, Tiago Cóser
-Cruzeiro: Bruno Rodrigues, Chico da Costa, Kaio Jorge, Kaique Kenji, Arroyo, Sinisterra, Marquinhos, Villarreal, Rayan Lelis, Tevis, Wanderson, Cássio, Marcelo Eráclito, Matheus Cunha, Otávio, Fagner, Kaiki Bruno, Kauã Moraes, Kauã Prates, Nicolas Pontes, William Fernando, William, Cauan Baptistella, Christian, Gerson, Japa, Lucas Romero, Lucas Silva, Matheus Pereira, Matheus Henrique, Murilo Rhikman, Rhuan Gabriel, Vitinho, Walace, Tite, Bruno Alves, Fabrício Bruno, Jonathan Jesus, Janderson, João Marcelo, Kaiquy Luiz, Villalba
-Flamengo: Bruno Henrique, Douglas Telles, Everton, Plata, Luiz Araújo, Pedro, Samuel Lino, Wallace Yan, Rossi, Andrew, Dyogo Alves, Léo Nannetti, Alex Sandro, Ayrton Lucas, Daniel Sales, Emerson Royal, Varela, Joshua, De la Cruz, Erick Pulgar, Evertton Araújo, Arrascaeta, Guilherme Gomes, Carrascal, Jorginho, Lucas Paquetá, Luiz Felipe, Pablo Lúcio, Saúl, Daniel Silva, Danilo, Da Mata, João Victor, Léo Pereira, Léo Ortiz, Vitão
-Fluminense: Canobbio, Cano, John Kennedy, Keven Samuel, Serna, Matheus Reis, Riquelme Felipe, Santi Moreno, Wesley Natã, Soteldo, Fábio, Marcelo Pitaluga, Vitor Eudes, Guga, Guilherme Arana, Júlio Fidelis, Renê, Samuel Xavier, Bernal, Nonato, Hércules, Savarino, Lucho Acosta, Martinelli, Otávio, Ganso, Luis Zubeldía, Ignácio, Igor Rabello, Jemmes, Freytes, Luan Freitas
-Grêmio: André, Carlos Vinícius, Pavón, Amuzu, Gabriel Mec, Jeferson, Enamorado, Braithwaite, Tetê, Gabriel Grando, Thiago Beltrame, Weverton, Caio Paulista, João Pedro, Marcos Rocha, Marlon, Arthur Melo, Dodi, Nardoni, Jefinho, Leonel Pérez, Villasanti, Monsalve, Riquelme, Roger, Ronald, Tiaguinho, Willian, Luís Castro, Noriega, Balbuena, Gustavo Martins, Viery, Wagner Leonardo, Kannemann
-Internacional: Alerrandro, Carbonero, João Bezerra, João Victor, Kayky, Borré, Raykkonen, Vitinho, Anthoni, Diego, Rochet, Bernabei, Alisson, Aguirre, Matheus Bahia, Alan Rodríguez, Alan Patrick, Allex, Bruno Gomes, Bruno Henrique, Bruno Tabata, Gustavo Prado, Paulinho, Richard, Villagra, Ronaldo, Thiago Maia, Paulo Pezzolano, Clayton Sampaio, Félix Torres, Mercado, Juninho, Pedro Kauã, Victor Gabriel
-Mirassol: Alesson, André Luis, Galeano, Carlos Eduardo, Edson Carioca, Everton Galdino, Tiquinho Soares, Negueba, Nathan Fogaça, Renato Marques, Alex Muralha, Thomazella, Walter, Daniel Borges, Igor Cariús, Igor Formiga, Reinaldo, Victor Luis, Neto Moura, Eduardo, Denilson, Chico Kim, Aldo Filho, Lucas Mugni, Shaylon, Yuri Lara, Rafael Guanaes, Rodrigues, João Victor, Lucas Oliveira, Willian Machado
-Palmeiras: Belé, Flaco López, Luighi, Paulinho, Ramón Sosa, Riquelme Fillipi, Vitor Roque, Carlos Miguel, Marcelo Lomba, Giay, Arthur, Jefté, Piquerez, Khellven, Allan, Andreas Pereira, Emiliano Martínez, Felipe Anderson, Arias, Larson, Lucas Evangelista, Luis Pacheco, Marlon Freitas, Maurício, Abel Ferreira, Bruno Fuchs, Gustavo Gómez, Benedetti, Murilo
-Remo: Alef Manga, Carlinhos, Eduardo Melo, Filipe Lima, Jajá, João Pedro, Nicolás Ferreira, Tico, Rafael Monti, Ivan, João Victor, Marcelo Rangel, Marcos Alexandre, Ygor Vinhas, Cufré, João Lucas, Marcelinho, Sávio, PH Gama, Diego Hernández, Freitas, Catarozzi, Giovanni Pavani, Yago Pikachu, Jáderson, Zé Ricardo, José Welison, Picco, Panagiotis, Patrick, Patrick de Paula, Rafael Soares, Vitor Bueno, Cantillo, Yago Ferreira, Tassano, Kayky Almeida, Léo Andrade, Marllon, Thalisson Gabriel, Klaus
-Santos: Fernando Pradella, Gabriel, Lautaro Díaz, Mateus Xavier, Moisés, Nadson, Robinho Jr., Rony, Diógenes, Gabriel Brazão, Escobar, Igor Vinícius, Souza, Mayke, Vinicius Lira, Rollheiser, Oliva, Gabriel Bontempo, Gabriel Menino, Gustavo Henrique, Zé Rafael, João Schmidt, Miguelito, Neymar, Thaciano, Rincón, Willian Arão, Barreal, Juan Vojvoda, Adonis Frías, Zé Ivaldo, João Basso, João Ananias, Luan Peres
-São Paulo: Ferreira, André Silva, Tapia, Calleri, Lucca, Luciano, Paulinho, Ryan Francisco, Coronel, Rafael, Young, Cédric Soares, Enzo Díaz, Lucas Ramon, Maik, Wendell, Alisson, Cauly, Bobadilla, Danielzinho, Djhordney, Felipe Negrucci, Luan, Lucas Moura, Marcos Antônio, Pablo Maia, Pedro Ferreira, Hernán Crespo, Alan Franco, Sabino, Dória, Ferraresi, Rafael Tolói, Arboleda
-Vasco: Andrey Fernandes, Brenner, Andrés Gómez, Spinelli, David, João Vitor, Marino Hinestroza, Vegetti, Daniel Fuzato, Léo Jardim, Phillipe Gabriel, Puma Rodríguez, Lucas Piton, Cuiabano, Paulo Henrique, Adson, Barros, Tchê Tchê, Hugo Moura, Jair, Johan Rojas, JP, Mateus Carvalho, Matheus França, Nuno Moreira, Thiago Mendes, Bruno Lazaroni, Saldivia, Carlos Cuesta, Lucas Freitas, Robert Renan
-Vitória: Erick, Fabri, Kike Saverio, Lawan, Lucas Silva, Luis Miguel, Marinho, Osvaldo, Pedro Henrique, Renato Kayzer, Renzo López, Fintelman, Gabriel, Lucas Arcanjo, Thiago Couto, Yuri Sena, Claudinho, Jamerson, Luan Cândido, Mateus Silva, Nathan Mendes, Paulo Roberto, Ramon, Cantalapiedra, Caíque, Edenílson, Dudu, Baralhas, Zé Breno, Emmanuel Martínez, Matheuzinho, Pablo Baianinho, Ronald Lopes, Rúben Ismael, Jair Ventura, Cacá, Camutanga, Neris, Zé Marcos, Edu, Riccieli
+-   Com os nomes já corrigidos e a estrutura em mente, escreva a legenda final.
+-   Preserve o tom, o raciocínio e a personalidade do analista. Se ele foi direto, seja direto. Se foi cauteloso, seja cauteloso.
 
-## FIDELIDADE OBRIGATÓRIA
+**PASSO 4: VERIFICAÇÃO FINAL (CHECKLIST DE FALHA ZERO)**
 
-- Preserve TODOS os números, percentuais, médias e comparações ditos
-- Preserve o raciocínio exato do analista, inclusive quando ele questiona ou contraria o mercado
-- Preserve o tom: se o analista está cauteloso, a legenda é cautelosa; se está confiante, é confiante
-- Preserve as ressalvas e alertas com o mesmo peso dado no áudio
-- Mantenha os nomes dos jogadores exatamente como mencionados
-- Se o analista der uma opinião forte ou contrária ao senso comum, isso deve aparecer com destaque
+-   Releia a legenda que você escreveu.
+-   A legenda termina com a última informação do áudio? (SIM/NÃO)
+-   Você adicionou alguma frase de encerramento proibida? (SIM/NÃO)
+-   Você usou "Em resumo", "Portanto", etc.? (SIM/NÃO)
+-   Todos os nomes de jogadores foram checados e corrigidos com base na lista? (SIM/NÃO)
 
-## PROIBIÇÕES ABSOLUTAS
+Se qualquer resposta for "SIM" para as perguntas de proibição, você falhou. Apague tudo e recomece do PASSO 1.
 
-- Não inventar dados, jogadores ou conclusões não ditas
-- Não suavizar opiniões fortes do analista
-- Não generalizar onde o analista foi específico
-- PROIBIDO usar qualquer frase de encerramento genérica de IA. Exemplos do que é PROIBIDO: "Esses insights são fundamentais para a rodada!", "Boa sorte na escalação!", "Fique atento às novidades!", "Essas informações são cruciais!", "Vamos torcer!", "Até a próxima!", ou qualquer variação motivacional que o analista NÃO disse no áudio.
-- Não usar: "Em resumo", "Portanto", "Conclusão", "Vale lembrar", "Como já falamos", "Dessa forma"
-- Não usar linguagem genérica de IA em nenhuma parte do texto
-- Não adicionar hashtags
-- Não usar Markdown (asteriscos, underscores) — APENAS tags HTML
-- A legenda termina quando o conteúdo do áudio termina. Ponto. Sem frase de encerramento.
+## ENTRADA DO USUÁRIO
 
-## VERIFICAÇÃO DE NOMES (OBRIGATÓRIO)
+Abaixo está a transcrição do áudio. Execute sua missão agora, seguindo os 4 passos à risca.
+"""
 
-Antes de escrever qualquer nome de jogador na legenda, você DEVE verificar na lista acima (BASE DE JOGADORES) se o nome está correto. Se o Whisper transcreveu "Vitor Hugo", verifique na lista — no Atlético-MG existe "Vitor Hugo". Se transcreveu "Renan Lodi", confirme — existe no Atlético-MG. Use SEMPRE a grafia exata da lista. Se o nome não estiver na lista, use a transcrição como está, sem inventar.
-
-## MISSÃO FINAL
-
-A legenda deve parecer escrita pelo próprio analista — com sua voz, seu raciocínio, sua personalidade.
-Nada além do texto final. Sem comentários antes. Sem comentários depois. Sem frase de encerramento."""
-
-
-# ── Servidor HTTP para satisfazer o health check do Render ──────────────────
+# ── Servidor HTTP para satisfazer o health check do Railway/Render ──────────────────
 
 class HealthHandler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -114,17 +107,16 @@ class HealthHandler(BaseHTTPRequestHandler):
     def log_message(self, format, *args):
         pass
 
-
 def start_health_server():
     server = HTTPServer(('0.0.0.0', PORT), HealthHandler)
     logger.info(f"Servidor HTTP rodando na porta {PORT}")
     server.serve_forever()
 
-
 # ── Funções de transcrição e legendagem ─────────────────────────────────────
 
 def transcribe_audio(audio_bytes: bytes, filename: str = "audio.ogg") -> str:
     audio_io = io.BytesIO(audio_bytes)
+    # Usando httpx para timeouts mais longos
     with httpx.Client(timeout=120.0) as client:
         response = client.post(
             "https://api.openai.com/v1/audio/transcriptions",
@@ -135,9 +127,8 @@ def transcribe_audio(audio_bytes: bytes, filename: str = "audio.ogg") -> str:
         response.raise_for_status()
         return response.json()["text"]
 
-
 def generate_legend(transcript: str) -> str:
-    with httpx.Client(timeout=60.0) as client:
+    with httpx.Client(timeout=180.0) as client: # Timeout aumentado para 3 min
         response = client.post(
             "https://api.openai.com/v1/chat/completions",
             headers={
@@ -148,15 +139,14 @@ def generate_legend(transcript: str) -> str:
                 "model": "gpt-4o",
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": f"Transcrição do áudio:\n\n{transcript}\n\nCrie a legenda agora."}
+                    {"role": "user", "content": f"Transcrição do áudio:\n\n{transcript}"}
                 ],
-                "temperature": 0.7,
-                "max_tokens": 1500
+                "temperature": 0.5, # Reduzida para diminuir alucinações
+                "max_tokens": 2048 # Aumentado para legendas mais longas
             }
         )
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]
-
 
 # ── Handlers do Telegram ─────────────────────────────────────────────────────
 
@@ -173,35 +163,36 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         if update.message.voice:
             tg_file = await update.message.voice.get_file()
             filename = "voice.ogg"
-        else:
+        elif update.message.audio:
             tg_file = await update.message.audio.get_file()
             filename = update.message.audio.file_name or "audio.ogg"
+        else:
+            return
 
         audio_bytes = await tg_file.download_as_bytearray()
         logger.info(f"Áudio recebido: {len(audio_bytes)} bytes")
 
-        await processing_msg.edit_text("🎙 Transcrevendo...")
+        await processing_msg.edit_text("🎙️ Transcrevendo com Whisper...")
         transcript = transcribe_audio(bytes(audio_bytes), filename)
-        logger.info(f"Transcrição: {len(transcript)} chars")
+        logger.info(f"Transcrição ({len(transcript)} chars): {transcript[:100]}...")
 
-        await processing_msg.edit_text("✍️ Gerando legenda...")
+        await processing_msg.edit_text("✍️ Gerando legenda inteligente...")
         legend = generate_legend(transcript)
-        logger.info(f"Legenda: {len(legend)} chars")
+        logger.info(f"Legenda gerada ({len(legend)} chars)")
 
-        # Usa HTML para formatação confiável (negrito + itálico combinados funcionam)
         await processing_msg.edit_text(legend, parse_mode='HTML')
-        logger.info("Concluído com sucesso.")
+        logger.info("✅ Legenda enviada com sucesso.")
 
     except httpx.HTTPStatusError as e:
-        logger.error(f"Erro OpenAI: {e.response.status_code} - {e.response.text}")
+        error_text = e.response.text
+        logger.error(f"Erro na API OpenAI: {e.response.status_code} - {error_text}")
         await update.message.reply_text(
             f"❌ Erro na API OpenAI (código {e.response.status_code}).\n"
-            "Verifique se sua chave está correta e tem créditos."
+            f"Detalhe: {error_text}"
         )
     except Exception as e:
-        logger.error(f"Erro: {str(e)}", exc_info=True)
-        await update.message.reply_text(f"❌ Erro: {str(e)}")
-
+        logger.error(f"Erro inesperado: {str(e)}", exc_info=True)
+        await update.message.reply_text(f"❌ Erro inesperado no bot: {str(e)}")
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
@@ -210,43 +201,50 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("❌ Sem permissão.")
         return
     await update.message.reply_text(
-        "🎙 Bot de Legendagem TCC Ativado!\n\n"
-        "Envie um áudio (voice note ou arquivo) e eu vou:\n"
-        "1️⃣ Transcrever com Whisper\n"
-        "2️⃣ Gerar legenda inteligente com emojis\n\n"
-        "Pronto! 🚀"
+        "🎙️ **Bot de Legendagem TCC Ativado!**\n\n"
+        "Envie um áudio (voice note ou arquivo) e aguarde a mágica acontecer.\n\n"
+        "O bot irá transcrever e gerar uma legenda rica e formatada, como se tivesse sido escrita por você. As correções mais recentes foram aplicadas para garantir máxima fidelidade e zero frases de IA.",
+        parse_mode='Markdown'
     )
-
 
 # ── Inicialização ─────────────────────────────────────────────────────────────
 
 async def run_bot():
     if not TELEGRAM_BOT_TOKEN:
-        raise ValueError("TELEGRAM_BOT_TOKEN não configurado")
+        raise ValueError("Variável de ambiente TELEGRAM_BOT_TOKEN não configurada.")
     if not OPENAI_API_KEY:
-        raise ValueError("OPENAI_API_KEY não configurado")
+        raise ValueError("Variável de ambiente OPENAI_API_KEY não configurada.")
     if ALLOWED_USER_ID == 0:
-        raise ValueError("ALLOWED_USER_ID não configurado")
+        raise ValueError("Variável de ambiente ALLOWED_USER_ID não configurada para um ID de usuário válido.")
 
-    logger.info(f"Iniciando bot | ALLOWED_USER_ID={ALLOWED_USER_ID}")
+    logger.info(f"Iniciando bot para o usuário permitido: {ALLOWED_USER_ID}")
 
     app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(MessageHandler(filters.VOICE, process_audio_message))
-    app.add_handler(MessageHandler(filters.AUDIO, process_audio_message))
+    app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, process_audio_message))
 
-    await app.initialize()
-    await app.start()
-    await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
-
-    logger.info("Bot rodando... aguardando mensagens.")
-    await asyncio.Event().wait()
-
+    # Inicia o bot e o polling
+    try:
+        await app.initialize()
+        await app.start()
+        await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+        logger.info("Bot iniciado e aguardando mensagens.")
+        # Mantém o bot rodando indefinidamente
+        await asyncio.Event().wait()
+    finally:
+        # Garante que os recursos sejam liberados
+        await app.updater.stop()
+        await app.stop()
 
 if __name__ == '__main__':
-    # Inicia o servidor HTTP em thread separada (para o Render não matar o processo)
+    # O servidor de health check é crucial para plataformas como Railway e Render
     health_thread = threading.Thread(target=start_health_server, daemon=True)
     health_thread.start()
 
-    # Inicia o bot
-    asyncio.run(run_bot())
+    # Inicia o loop de eventos do bot
+    try:
+        asyncio.run(run_bot())
+    except KeyboardInterrupt:
+        logger.info("Bot encerrado manualmente.")
+    except Exception as e:
+        logger.critical(f"Erro crítico ao iniciar o bot: {e}", exc_info=True)
