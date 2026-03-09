@@ -86,15 +86,21 @@ Vitória: Erick, Fabri, Kike Saverio, Lawan, Lucas Silva, Luis Miguel, Marinho, 
 - Não inventar dados, jogadores ou conclusões não ditas
 - Não suavizar opiniões fortes do analista
 - Não generalizar onde o analista foi específico
-- Não usar: "Em resumo", "Portanto", "Conclusão", "Vale lembrar", "Como já falamos"
-- Não usar linguagem genérica de IA
+- PROIBIDO usar qualquer frase de encerramento genérica de IA. Exemplos do que é PROIBIDO: "Esses insights são fundamentais para a rodada!", "Boa sorte na escalação!", "Fique atento às novidades!", "Essas informações são cruciais!", "Vamos torcer!", "Até a próxima!", ou qualquer variação motivacional que o analista NÃO disse no áudio.
+- Não usar: "Em resumo", "Portanto", "Conclusão", "Vale lembrar", "Como já falamos", "Dessa forma"
+- Não usar linguagem genérica de IA em nenhuma parte do texto
 - Não adicionar hashtags
 - Não usar Markdown (asteriscos, underscores) — APENAS tags HTML
+- A legenda termina quando o conteúdo do áudio termina. Ponto. Sem frase de encerramento.
+
+## VERIFICAÇÃO DE NOMES (OBRIGATÓRIO)
+
+Antes de escrever qualquer nome de jogador na legenda, você DEVE verificar na lista acima (BASE DE JOGADORES) se o nome está correto. Se o Whisper transcreveu "Vitor Hugo", verifique na lista — no Atlético-MG existe "Vitor Hugo". Se transcreveu "Renan Lodi", confirme — existe no Atlético-MG. Use SEMPRE a grafia exata da lista. Se o nome não estiver na lista, use a transcrição como está, sem inventar.
 
 ## MISSÃO FINAL
 
 A legenda deve parecer escrita pelo próprio analista — com sua voz, seu raciocínio, sua personalidade.
-Nada além do texto final. Sem comentários antes. Sem comentários depois."""
+Nada além do texto final. Sem comentários antes. Sem comentários depois. Sem frase de encerramento."""
 
 
 # ── Servidor HTTP para satisfazer o health check do Render ──────────────────
