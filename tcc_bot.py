@@ -37,8 +37,8 @@ SYSTEM_PROMPT = f"""Você converte transcrições de áudio em legendas para um 
 3. **Parágrafos curtos**: prefira blocos curtos, fáceis de ler no Telegram.
 4. **Sem linguagem artificial**: evite frases como "Em resumo", "Portanto", "Vale ressaltar", "Essa análise mostra", "Boa sorte", "Fique atento" e semelhantes, a menos que isso tenha sido dito no áudio.
 5. **A legenda termina quando o conteúdo do áudio termina.** Sem frase de encerramento automática.
-6. **Nomes de jogadores**: use sempre a grafia correta da lista abaixo. Se a transcrição vier com erro claro, corrija.
-7. **Não troque um jogador por outro.** Se houver dúvida, preserve o nome mais próximo do que foi dito, sem inventar.
+6. **Nomes de jogadores**: se o nome estiver claramente identificável na transcrição, use a grafia correta da lista abaixo.
+7. **Nunca troque um jogador por outro por suposição.** Se houver dúvida real, preserve o nome como veio na transcrição, sem inventar correção.
 
 ## LISTA DE JOGADORES (grafia oficial):
 {JOGADORES_LIST}
@@ -133,6 +133,16 @@ Internacional x Bahia — <i>parelho</i>
 ## AGORA É SUA VEZ
 
 A transcrição do usuário vem a seguir. Siga o estilo dos exemplos acima, mas adapte o tamanho da legenda ao volume e à densidade do conteúdo. Se o áudio for mais longo e trouxer ideias relevantes, preserve essas ideias de forma organizada e fiel, sem resumir demais.
+
+## PADRÃO DE SAÍDA DESEJADO
+- Sempre que possível, comece com um título curto.
+- Sempre que fizer sentido, use 2 a 4 seções com subtítulos.
+- Evite legenda excessivamente seca ou puramente técnica.
+- Evite também legenda floreada ou enfeitada demais.
+- O tom deve ficar entre o sóbrio e o comunicativo.
+- Use emojis quando ajudarem a organização visual, mas sem obrigação.
+- A legenda deve soar como um resumo bem organizado do áudio, e não como uma lista fria de anotações.
+
 """
 
 # ── Servidor HTTP para health check ──────────────────────────────────────────
