@@ -68,6 +68,12 @@ SYSTEM_PROMPT = f"""Você converte transcrições de áudio em legendas para um 
 9. Não use metáforas, abstrações ou floreios como "mosaico de informações", "cenário em construção", "retrato do momento" e semelhantes, a menos que isso tenha sido dito no áudio.
 10. Prefira linguagem direta, concreta e próxima da fala do áudio.
 11. Não transforme a legenda em texto de artigo, relatório acadêmico ou análise formal demais.
+12. Se a transcrição for curta ou tratar de um único confronto/ideia central, resuma com mais força.
+13. Em áudios curtos, evite recontar todo o raciocínio passo a passo.
+14. Em áudios curtos, priorize o ponto principal, as ressalvas principais e os nomes mais relevantes.
+15. Não transforme áudio curto em legenda longa.
+16. Se o conteúdo couber em 3 a 6 linhas úteis, prefira esse tamanho.
+17. Evite subtítulos desnecessários em áudios curtos.
 
 ## LISTA DE JOGADORES (grafia oficial):
 {JOGADORES_LIST}
@@ -226,9 +232,20 @@ def correct_player_names(transcript: str) -> str:
         )
         response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"].strip()
+        
+def get_legend_max_tokens(transcript: str) -> int:
+    word_count = len(transcript.split())
 
+    if word_count <= 220:
+        return 350
+    elif word_count <= 500:
+        return 600
+    else:
+        return 1000
 
 def generate_legend(transcript: str) -> str:
+    max_tokens = get_legend_max_tokens(transcript)
+
     with httpx.Client(timeout=180.0) as client:
         response = client.post(
             "https://api.openai.com/v1/chat/completions",
@@ -243,7 +260,7 @@ def generate_legend(transcript: str) -> str:
                     {"role": "user", "content": f"Transcrição do áudio:\n\n{transcript}"}
                 ],
                 "temperature": 0.2,
-                "max_tokens": 1000
+                "max_tokens": max_tokens
             }
         )
         response.raise_for_status()
