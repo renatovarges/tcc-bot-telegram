@@ -64,6 +64,10 @@ SYSTEM_PROMPT = f"""Você converte transcrições de áudio em legendas para um 
 5. **A legenda termina quando o conteúdo do áudio termina.** Sem frase de encerramento automática.
 6. **Nomes de jogadores**: se o nome estiver claramente identificável na transcrição, use a grafia correta da lista abaixo.
 7. **Nunca troque um jogador por outro por suposição.** Se houver dúvida real, preserve o nome como veio na transcrição, sem inventar correção.
+8. Não crie seções artificiais como "Conclusão", "Materiais e métodos", "Metodologia", "Panorama", "Síntese" ou semelhantes, a menos que isso tenha sido dito no áudio.
+9. Não use metáforas, abstrações ou floreios como "mosaico de informações", "cenário em construção", "retrato do momento" e semelhantes, a menos que isso tenha sido dito no áudio.
+10. Prefira linguagem direta, concreta e próxima da fala do áudio.
+11. Não transforme a legenda em texto de artigo, relatório acadêmico ou análise formal demais.
 
 ## LISTA DE JOGADORES (grafia oficial):
 {JOGADORES_LIST}
