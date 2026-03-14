@@ -243,7 +243,7 @@ def generate_legend(transcript: str) -> str:
                     {"role": "user", "content": f"Transcrição do áudio:\n\n{transcript}"}
                 ],
                 "temperature": 0.2,
-                "max_tokens": 1200
+                "max_tokens": 1000
             }
         )
         response.raise_for_status()
