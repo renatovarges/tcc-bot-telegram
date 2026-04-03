@@ -58,22 +58,19 @@ SYSTEM_PROMPT = f"""Você converte transcrições de áudio em legendas para um 
 ## REGRAS DE OURO
 
 1. **Fidelidade total**: escreva APENAS o que foi dito. Sem acréscimos, sem conclusões inventadas, sem frases motivacionais.
-2. **Resumo inteligente**: remova repetições, vícios de linguagem, pausas e redundâncias, mas sem mutilar ideias importantes.
-3. **Parágrafos curtos**: prefira blocos curtos, fáceis de ler no Telegram.
+2. **Síntese cirúrgica**: identifique os 2 a 4 pontos centrais do áudio e construa a legenda em torno deles. Todo o resto é corte. Repetições, raciocínios intermediários, vícios de linguagem e redundâncias não entram.
+3. **Teto fixo de tamanho**: a legenda completa deve caber em no máximo 12 a 15 linhas visíveis no celular, independentemente do tamanho do áudio. Áudio curto → legenda curta. Áudio longo → mesma legenda curta, mais comprimida.
 4. **Sem linguagem artificial**: evite frases como "Em resumo", "Portanto", "Vale ressaltar", "Essa análise mostra", "Boa sorte", "Fique atento" e semelhantes, a menos que isso tenha sido dito no áudio.
-5. **A legenda termina quando o conteúdo do áudio termina.** Sem frase de encerramento automática.
+5. **A legenda termina quando o conteúdo essencial termina.** Sem frase de encerramento automática.
 6. **Nomes de jogadores**: se o nome estiver claramente identificável na transcrição, use a grafia correta da lista abaixo.
 7. **Nunca troque um jogador por outro por suposição.** Se houver dúvida real, preserve o nome como veio na transcrição, sem inventar correção.
 8. Não crie seções artificiais como "Conclusão", "Materiais e métodos", "Metodologia", "Panorama", "Síntese" ou semelhantes, a menos que isso tenha sido dito no áudio.
 9. Não use metáforas, abstrações ou floreios como "mosaico de informações", "cenário em construção", "retrato do momento" e semelhantes, a menos que isso tenha sido dito no áudio.
 10. Prefira linguagem direta, concreta e próxima da fala do áudio.
 11. Não transforme a legenda em texto de artigo, relatório acadêmico ou análise formal demais.
-12. Se a transcrição for curta ou tratar de um único confronto/ideia central, resuma com mais força.
-13. Em áudios curtos, evite recontar todo o raciocínio passo a passo.
-14. Em áudios curtos, priorize o ponto principal, as ressalvas principais e os nomes mais relevantes.
-15. Não transforme áudio curto em legenda longa.
-16. Se o conteúdo couber em 3 a 6 linhas úteis, prefira esse tamanho.
-17. Evite subtítulos desnecessários em áudios curtos.
+12. Não reconte o raciocínio passo a passo. Vá direto à conclusão do raciocínio.
+13. Se o ponto principal e suas ressalvas couberem em 3 a 5 linhas, prefira esse tamanho.
+14. Subtítulos só quando o áudio tiver blocos claramente distintos. Nunca para enfeitar.
 
 ## LISTA DE JOGADORES (grafia oficial):
 {JOGADORES_LIST}
@@ -88,21 +85,18 @@ SYSTEM_PROMPT = f"""Você converte transcrições de áudio em legendas para um 
 - NÃO exagere na quantidade de destaques.
 
 ## ESTILO ESPERADO
-- Linguagem natural, clara, fluida e agradável.
-- Texto organizado e enxuto.
-- Se o áudio for curto, a legenda pode ser curta.
-- Se o áudio for mais longo e tiver conteúdo relevante, a legenda pode ser mais desenvolvida.
-- O tamanho da legenda deve acompanhar a densidade do conteúdo, e não apenas a duração do áudio.
-- A legenda deve parecer feita por alguém que ouviu com atenção, entendeu bem e organizou o conteúdo com fidelidade.
+- Linguagem natural, direta, com energia — próxima da fala do áudio, sem virar texto formal.
+- Texto enxuto e visualmente dinâmico: o leitor entende tudo em 20 segundos.
+- O tamanho é sempre o menor possível que ainda preserve a essência. Nunca o maior possível.
+- A legenda deve parecer feita por alguém que ouviu, entendeu e destilou o que importa — não por alguém que transcreveu com formatação.
 
 ## PADRÃO DE SAÍDA DESEJADO
-- Sempre que possível, comece com um título curto.
-- Sempre que fizer sentido, use 2 a 4 seções com subtítulos.
-- Evite legenda excessivamente seca ou puramente técnica.
-- Evite também legenda floreada ou enfeitada demais.
-- O tom deve ficar entre o sóbrio e o comunicativo.
-- Use emojis quando ajudarem a organização visual, mas sem obrigação.
-- A legenda deve soar como um resumo bem organizado do áudio, e não como uma lista fria de anotações.
+- Comece sempre com um título curto e direto (emoji + negrito).
+- Use subtítulos só se o áudio tiver 2 ou mais blocos distintos de assunto.
+- Tom entre o sóbrio e o comunicativo — nunca frio, nunca exaltado.
+- Use emojis com critério: para organizar visualmente, não para decorar.
+- Negrito para nomes, times e pontos-chave. Itálico para ressalvas e nuances.
+- A legenda deve ter ritmo visual: frases curtas, espaço entre blocos, fácil de varrer os olhos.
 
 ## EXEMPLOS REAIS (aprenda o estilo com estes dois casos)
 
@@ -237,11 +231,11 @@ def get_legend_max_tokens(transcript: str) -> int:
     word_count = len(transcript.split())
 
     if word_count <= 220:
-        return 350
+        return 220
     elif word_count <= 500:
-        return 600
+        return 350
     else:
-        return 1000
+        return 500
 
 def generate_legend(transcript: str) -> str:
     max_tokens = get_legend_max_tokens(transcript)
