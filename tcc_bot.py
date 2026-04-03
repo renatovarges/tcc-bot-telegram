@@ -113,8 +113,8 @@ SYSTEM_PROMPT = f"""Você converte transcrições de áudio em legendas para um 
 ## REGRAS DE OURO
 
 1. **Fidelidade total**: escreva APENAS o que foi dito. Sem acréscimos, sem conclusões inventadas, sem frases motivacionais.
-2. **Síntese cirúrgica**: identifique os 2 a 4 pontos centrais do áudio e construa a legenda em torno deles. Todo o resto é corte. Repetições, raciocínios intermediários, vícios de linguagem e redundâncias não entram.
-3. **Teto fixo de tamanho**: a legenda completa deve caber em no máximo 12 a 15 linhas visíveis no celular, independentemente do tamanho do áudio. Áudio curto → legenda curta. Áudio longo → mesma legenda curta, mais comprimida.
+2. **Síntese inteligente**: identifique os 2 a 4 pontos centrais do áudio e construa a legenda em torno deles. Corte repetições, vícios de linguagem e raciocínios intermediários. Mas preserve o sentido completo de cada ideia — nunca fragmente uma frase a ponto de ela perder o significado.
+3. **Tamanho proporcional, sempre enxuto**: prefira legendas curtas, mas não a qualquer custo. Cada frase deve ter sentido completo. Se precisar de uma linha a mais para que a ideia faça sentido, use. O que não cabe é redundância — não frase incompleta.
 4. **Sem linguagem artificial**: evite frases como "Em resumo", "Portanto", "Vale ressaltar", "Essa análise mostra", "Boa sorte", "Fique atento" e semelhantes, a menos que isso tenha sido dito no áudio.
 5. **A legenda termina quando o conteúdo essencial termina.** Sem frase de encerramento automática.
 6. **Nomes de jogadores**: se o nome estiver claramente identificável na transcrição, use a grafia correta da lista abaixo.
@@ -140,10 +140,11 @@ SYSTEM_PROMPT = f"""Você converte transcrições de áudio em legendas para um 
 - NÃO exagere na quantidade de destaques.
 
 ## ESTILO ESPERADO
-- Linguagem natural, direta, com energia — próxima da fala do áudio, sem virar texto formal.
+- A legenda deve soar como o próprio locutor escrevendo — preserve o tom, o ritmo e a entonação da fala. Se ele fala com energia, a legenda tem energia. Se ele faz ressalvas, as ressalvas aparecem.
+- Linguagem direta e natural, sem virar texto formal nem telegrama.
+- Evite o estilo "Nome: dado. Nome: dado." — quando mencionar jogadores com destaques, escreva frases curtas mas completas. Ex: em vez de "Christian: gol e assistência", prefira "Christian fez gol, deu assistência e ainda saiu com desarmes."
 - Texto enxuto e visualmente dinâmico: o leitor entende tudo em 20 segundos.
-- O tamanho é sempre o menor possível que ainda preserve a essência. Nunca o maior possível.
-- A legenda deve parecer feita por alguém que ouviu, entendeu e destilou o que importa — não por alguém que transcreveu com formatação.
+- A legenda deve parecer feita por alguém que ouviu com atenção, entendeu e organizou o conteúdo com fidelidade — não por alguém que preencheu um formulário.
 
 ## PADRÃO DE SAÍDA DESEJADO
 - Comece sempre com um título curto e direto (emoji + negrito).
@@ -290,11 +291,11 @@ def get_legend_max_tokens(transcript: str) -> int:
     word_count = len(transcript.split())
 
     if word_count <= 220:
-        return 220
+        return 300
     elif word_count <= 500:
-        return 350
+        return 450
     else:
-        return 500
+        return 650
 
 def generate_legend(transcript: str) -> str:
     max_tokens = get_legend_max_tokens(transcript)
