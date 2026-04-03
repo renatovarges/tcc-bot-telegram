@@ -6,6 +6,7 @@ HTML parse_mode for Telegram formatting
 """
 
 import os
+import csv
 import logging
 import io
 import asyncio
@@ -26,31 +27,64 @@ OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 ALLOWED_USER_ID = int(os.getenv('ALLOWED_USER_ID', '0'))
 PORT = int(os.getenv('PORT', '10000'))
 
+
+def load_player_reference():
+    """Carrega o CSV de jogadores e retorna:
+    - referencia: string formatada 'Apelido (Time): Nome completo' por linha
+    - whisper_prompt: lista curta de apelidos para guiar o Whisper
+    """
+    ref_lines = []
+    whisper_names = []
+    csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                            "cartola_2026_jogadores_nome_posicao_time_20260303_154646.csv")
+    try:
+        with open(csv_path, newline='', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+            seen = set()
+            for row in reader:
+                apelido = row['apelido'].strip()
+                nome = row['nome'].strip()
+                time = row['time'].strip()
+                if apelido not in seen:
+                    seen.add(apelido)
+                    ref_lines.append(f"{apelido} ({time}): {nome}")
+                    whisper_names.append(apelido)
+        logger.info(f"CSV carregado: {len(ref_lines)} jogadores únicos")
+    except Exception as e:
+        logger.warning(f"CSV não carregado, usando lista fallback: {e}")
+    return "\n".join(ref_lines), ", ".join(whisper_names[:120])
+
+
+JOGADORES_REFERENCIA, WHISPER_NAMES = load_player_reference()
+
 JOGADORES_LIST = "Abel Ferreira, Acevedo, Ademir, Adonis Frías, Adson, Aguirre, Alan Franco, Alan Patrick, Alan Rodríguez, Alerrandro, Alef Manga, Alisson, Alex Sandro, Alex Telles, Alexander Barboza, Alexsander, Alix Vinicius, Allan, André, André Luis, André Ramalho, Andreas Pereira, Andrew, Andrey Fernandes, Angileri, Anthoni, Ararat, Arboleda, Arias, Arthur, Arthur Cabral, Arthur Dias, Arthur Izaque, Arthur Melo, Arthur Novaes, Artur, Arrascaeta, Ayrton Lucas, Bastos, Batata, Belé, Benassi, Benavídez, Benedetti, Bernal, Bernabei, Bernard, Bobadilla, Bolasie, Borré, Braithwaite, Brayan, Breno Bidon, Breno Lopes, Bruno Alves, Bruno Fuchs, Bruno Gomes, Bruno Henrique, Bruno Leonardo, Bruno Melo, Bruno Pacheco, Bruno Rodrigues, Bruno Tabata, Bruninho, Cacá, Caio Alexandre, Caio Paulista, Caíque, Calleri, Camilo, Camutanga, Canobbio, Cantalapiedra, Cantillo, Carlos Cuesta, Carlos Eduardo, Carlos Miguel, Carlos Vinícius, Carlinhos, Carrascal, Carrillo, Cássio, Cassierra, Cauan Baptistella, Cauê, Cauly, Cédric Soares, Charles, Chico da Costa, Chico Kim, Chris Ramos, Christian, Claudinho, Clayton Sampaio, Cleiton, Coronel, Cristhian Loor, Cristian Olivera, Cuello, Cuiabano, Cufré, Da Mata, Danilo, Daniel Borges, Daniel Fuzato, Daniel Silva, Danielzinho, David, David Duarte, David Ricardo, Davi Gomes, De la Cruz, Dell, Denilson, Diego, Diego Hernández, Dieguinho, Diógenes, Djhordney, Dodi, Dória, Dorival Júnior, Douglas Telles, Dudu, Dyogo Alves, Edenílson, Edson Carioca, Edu, Eduardo, Eduardo Domínguez, Eduardo Doma, Eduardo Sasha, Eduardo Santos, Emerson Royal, Emiliano Martínez, Emmanuel Martínez, Enamorado, Ênio, Enzo Díaz, Enzo Vagner, Erick, Erick Pulga, Eric Ramires, Escobar, Esquivel, Everaldo, Everson, Everton, Everton Galdino, Everton Ribeiro, Evertton Araújo, Fabinho, Fábio, Fabri, Fabrício, Fabrício Bruno, Fagner, Felipe Anderson, Felipe Chiqueti, Felipe Guimarães, Felipe Jonatan, Felipe Longo, Felipe Negrucci, Felipinho, Félix Torres, Fernando, Fernando Pradella, Fernando Seabra, Fernando Sobral, Ferraresi, Ferreira, Fintelman, Flaco López, Fredi Lippert, Freitas, Freytes, Gabriel, Gabriel Abdias, Gabriel Bontempo, Gabriel Brazão, Gabriel Delfim, Gabriel Grando, Gabriel Leite, Gabriel Mec, Gabriel Menino, Gabriel Paulista, Gabriel Xavier, Galeano, Ganso, Garcez, Garro, Gerson, Giay, Gilberto, Gilmar Dal Pozzo, Giovanni Augusto, Giovanni Pavani, Guga, Gui Negão, Guilherme Arana, Guilherme Gomes, Gustavinho, Gustavo, Gustavo Henrique, Gustavo Martins, Gustavo Prado, Gustavo Scarpa, Gustavo Talles, Guzmán Rodríguez, Habraão, Hércules, Herrera, Higor Meritão, Hulk, Hugo, Hugo Moura, Hugo Souza, Iago, Igor Cariús, Igor Formiga, Igor Gomes, Igor Rabello, Igor Vinícius, Ignácio, Ignacio Sosa, Índio, Isaac, Isidro Pitta, Ítalo, Ivan, Iván Román, Jacy, Jáderson, Jair, Jair Ventura, Jajá, Jamerson, Janderson, Japa, Jean Carlos, Jean Gabriel, Jean Lucas, Jefté, Jefinho, Jeferson, Jeffinho, Jemmes, Jhoan Hernández, João Ananias, João Basso, João Bezerra, João Bom, João Cruz, João Lucas, João Marcelo, João Paulo, João Pedro, João Schmidt, João Victor, João Vitor, Joaquín Correa, Johan Rojas, John Kennedy, Jonathan Jesus, Jorginho, Josué, JP, JP Chermont, Juan Vojvoda, Julimar, Júnior Santos, Juninho, Juninho Capixaba, Junior Alonso, Justino, Kadir, Kaiki Bruno, Kainã, Kaio, Kaio César, Kaio Jorge, Kaique Kenji, Kaiquy Luiz, Kannemann, Kanu, Kauã Moraes, Kauã Pascini, Kauã Prates, Kauan, Kauan Toledo, Kauê Furquim, Kayke, Kayky, Kayky Almeida, Keno, Keven Samuel, Khellven, Kike Saverio, Klaus, Labyad, Larson, Lavega, Lawan, Léo, Léo Andrade, Léo Derik, Léo Jardim, Léo Linck, Léo Nannetti, Léo Ortiz, Léo Pereira, Léo Vieira, Leozinho, Leonel Pérez, Luan, Luan Cândido, Luan Freitas, Luan Peres, Lucas Arcanjo, Lucas Barbosa, Lucas Cunha, Lucas Evangelista, Lucas Freitas, Lucas Moura, Lucas Mugni, Lucas Oliveira, Lucas Paquetá, Lucas Piton, Lucas Romero, Lucas Ronier, Lucas Silva, Lucas Taverna, Lucca, Luciano, Luciano Juba, Lucão, Lucho Acosta, Luighi, Luis Miguel, Luis Zubeldía, Luiz Araújo, Luiz Felipe, Luiz Gustavo, Lyanco, Maicon, Maik, Mailson, Mancha, Marçal, Marcelinho, Marcelo Eráclito, Marcelo Lomba, Marcelo Pitaluga, Marcelo Rangel, Marcão, Marcinho, Marcos Alexandre, Marcos Antônio, Marcos Rocha, Marcos Vinícius, Marinho, Marino Hinestroza, Marlon, Marlon Freitas, Marllon, Marquinhos, Martín Anselmi, Martinelli, Mastriani, Mateus Carvalho, Mateus Dias, Mateus Iseppe, Mateus Silva, Mateus Xavier, Matheus Bahia, Matheus Bidu, Matheus Cunha, Matheus Donelli, Matheus Fernandes, Matheus França, Matheus Henrique, Matheus Martins, Matheus Pereira, Matheus Reis, Matheus Soares, Matheuzinho, Maurício, Maycon, Mayke, Medina, Memphis Depay, Mendoza, Mercado, Michel Araújo, Miguelito, Minda, Moisés, Monsalve, Montoro, Murilo, Murilo Rhikman, Mycael, Nadson, Nardoni, Natanael, Nathan, Nathan Fogaça, Nathan Mendes, Negueba, Neris, Neto, Neto Moura, Neto Pessoa, Newton, Neymar, Nicolas Pontes, Nicolás Ferreira, Nonato, Noriega, Nuno Moreira, Oliva, Osvaldo, Otávio, Pablo Baianinho, Pablo Lúcio, Pablo Maia, Palacios, Panagiotis, Patrick, Patrick de Paula, Paulinho, Paulo Henrique, Paulo Pezzolano, Pavón, Pedro, Pedro Cobra, Pedro Ferreira, Pedro Henrique, Pedro Kauã, Pedro Morisco, Pedro Raul, Pedro Rocha, Perotti, PH Gama, Phillipe Gabriel, Picco, Piquerez, Plata, Portilla, Praxedes, Preciado, Puma Rodríguez, Rafael, Rafael Carvalheira, Rafael Guanaes, Rafael Monti, Rafael Santos, Rafael Soares, Rafael Thyere, Rafael Tolói, Raniele, Raul, Rayan Lelis, Raykkonen, Reinaldo, Renan Lodi, Renan Peixoto, Renan Viana, Renato Kayzer, Renato Marques, Renê, Renzo López, Rhuan Gabriel, Riccieli, Richard, Riquelme, Riquelme Fillipi, Riquelme Felipe, Robert, Robert Renan, Robinho Jr., Rochet, Rodrigo Moledo, Rodrigo Nestor, Rodrigo Rodrigues, Rodrigues, Roger, Rogério Ceni, Rollheiser, Román Gómez, Ronald, Ronald Lopes, Ronaldo, Rony, Rossi, Ruan, Ruan Assis, Ruan Pablo, Rúben Ismael, Rubens, Ryan, Ryan Francisco, Sabino, Saldivia, Samuel Lino, Samuel Xavier, Sanabria, Santi Moreno, Santi Rodríguez, Santiago Mingo, Santos, Sant Anna, Saúl, Sávio, Savarino, Sebastián Gómez, Serna, Shaylon, Sinisterra, Soteldo, Souza, Spinelli, Tassano, Tchê Tchê, Terán, Tetê, Tevis, Thaciano, Thalisson Gabriel, Thiago Azaf, Thiago Beltrame, Thiago Couto, Thiago Maia, Thiago Mendes, Thiago Santos, Thomazella, Tiago Cóser, Tiago Volpi, Tiaguinho, Tico, Tiquinho Soares, Tite, Tomás Pérez, Tinga, Vanderlan, Varela, Vegetti, Viery, Villalba, Villasanti, Villagra, Villarreal, Vini Paulista, Vinicinho, Vinicius, Vinicius Lira, Vitão, Vitinho, Vitor Bueno, Vitor Eudes, Vitor Gabriel, Vitor Hugo, Vitor Roque, Viveros, Wagner Leonardo, Walace, Wallace Davi, Wallace Yan, Wallisson, Walter, Walter Clar, Wanderson, Weverton, Wendell, Wesley Natã, Willian, Willian Arão, Willian José, Willian Machado, Willian Oliveira, Yago Ferreira, Yago Pikachu, Ygor Vinhas, Ythallo, Yuri Alberto, Yuri Lara, Yuri Leles, Zé Breno, Zé Guilherme, Zé Ivaldo, Zé Marcos, Zé Ricardo, Zé Rafael, Zapelli"
 
-NAMES_CORRECTION_PROMPT = f"""Você é um corretor de nomes próprios em transcrições de áudio sobre futebol e Cartola.
+NAMES_CORRECTION_PROMPT = f"""Você é um especialista em correção de nomes de jogadores de futebol brasileiro em transcrições de áudio.
+
+CONTEXTO:
+A transcrição foi gerada pelo Whisper (reconhecimento de fala). O Whisper frequentemente erra nomes próprios brasileiros e estrangeiros — escreve foneticamente em vez de grafar corretamente. Seu trabalho é identificar e corrigir esses erros.
 
 TAREFA:
-Receber uma transcrição em português e devolver a MESMA transcrição, alterando APENAS nomes de jogadores, técnicos e pessoas do futebol quando houver forte evidência de erro.
+Devolver a MESMA transcrição, corrigindo APENAS nomes de jogadores, técnicos e pessoas do futebol.
 
 REGRAS:
-1. Não resuma.
-2. Não reorganize.
-3. Não reescreva frases.
-4. Não melhore estilo.
-5. Não mude pontuação, estrutura ou sentido do texto.
-6. Corrija SOMENTE nomes próprios do contexto do futebol quando estiver claramente identificável.
-7. Nunca troque um jogador por outro por suposição fraca.
-8. Se houver dúvida real, mantenha como está.
-9. Preserve todo o restante do texto exatamente como veio.
+1. Não resuma, não reorganize, não reescreva frases.
+2. Não mude pontuação, estrutura ou sentido.
+3. Preserve todo o restante do texto exatamente como veio.
+4. Corrija variações fonéticas comuns do Whisper:
+   - "Cauan" → "Cauã", "Caue" → "Cauê", "Neymar" pode vir certo, "Ayrton" pode vir "Airton"
+   - Nomes espanhóis/latinos frequentemente perdem acentos ou são distorcidos
+   - Apelidos compostos podem vir separados ou fundidos
+5. Use o time mencionado no contexto para desambiguar jogadores com apelidos similares.
+6. Se houver dúvida real entre dois jogadores distintos, mantenha como está.
+7. Nunca invente um nome que não esteja na lista abaixo.
 
-LISTA OFICIAL DE NOMES:
-{JOGADORES_LIST}
+REFERÊNCIA OFICIAL (formato: Apelido (Time): Nome completo):
+{JOGADORES_REFERENCIA if JOGADORES_REFERENCIA else JOGADORES_LIST}
 
 SAÍDA:
 - Devolva apenas a transcrição corrigida.
-- Nenhum comentário.
-- Nenhuma explicação.
+- Nenhum comentário. Nenhuma explicação.
 """
 
 SYSTEM_PROMPT = f"""Você converte transcrições de áudio em legendas para um grupo de Telegram de análise do Cartola FC.
@@ -200,7 +234,11 @@ def transcribe_audio(audio_bytes: bytes, filename: str = "audio.ogg") -> str:
             "https://api.openai.com/v1/audio/transcriptions",
             headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
             files={"file": (filename, audio_io, "audio/ogg")},
-            data={"model": "whisper-1", "language": "pt"}
+            data={
+                "model": "whisper-1",
+                "language": "pt",
+                "prompt": f"Cartola FC, Campeonato Brasileiro. Nomes: {WHISPER_NAMES[:400]}"
+            }
         )
         response.raise_for_status()
         return response.json()["text"]
@@ -215,7 +253,7 @@ def correct_player_names(transcript: str) -> str:
                 "Content-Type": "application/json"
             },
             json={
-                "model": "gpt-4o-mini",
+                "model": "gpt-4o",
                 "messages": [
                     {"role": "system", "content": NAMES_CORRECTION_PROMPT},
                     {"role": "user", "content": transcript}
