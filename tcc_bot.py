@@ -42,6 +42,8 @@ class UserFacingError(Exception):
 ALLOWED_TELEGRAM_TAGS = {"b", "i"}
 ALLOWED_TELEGRAM_TAG_PATTERN = re.compile(r"</?(b|i)>", re.IGNORECASE)
 MAIN_TITLE_BOLD_PATTERN = re.compile(r"^(?P<prefix>.*?<b>)(?P<title>.*?)(?P<suffix></b>.*)$", re.IGNORECASE)
+CODE_FENCE_LINE_PATTERN = re.compile(r"^\s*```(?:html)?\s*$", re.IGNORECASE)
+LANGUAGE_HINT_LINE_PATTERN = re.compile(r"^\s*html\s*$", re.IGNORECASE)
 
 
 def _get_retry_delay(response: httpx.Response, attempt: int) -> float:
@@ -113,6 +115,30 @@ def sanitize_telegram_html(text: str) -> str:
     return "".join(parts)
 
 
+def strip_model_wrappers(text: str) -> str:
+    if not text:
+        return text
+
+    lines = text.splitlines()
+
+    while lines and not lines[0].strip():
+        lines.pop(0)
+    while lines and not lines[-1].strip():
+        lines.pop()
+
+    while lines and (
+        CODE_FENCE_LINE_PATTERN.match(lines[0]) or LANGUAGE_HINT_LINE_PATTERN.match(lines[0])
+    ):
+        lines.pop(0)
+
+    while lines and CODE_FENCE_LINE_PATTERN.match(lines[-1]):
+        lines.pop()
+
+    cleaned = "\n".join(lines).strip()
+    cleaned = cleaned.replace("```html", "").replace("```HTML", "").replace("```", "")
+    return cleaned.strip()
+
+
 def force_main_title_uppercase(text: str) -> str:
     if not text:
         return text
@@ -120,7 +146,10 @@ def force_main_title_uppercase(text: str) -> str:
     lines = text.splitlines()
 
     for index, line in enumerate(lines):
-        if not line.strip():
+        stripped_line = line.strip()
+        if not stripped_line:
+            continue
+        if CODE_FENCE_LINE_PATTERN.match(stripped_line) or LANGUAGE_HINT_LINE_PATTERN.match(stripped_line):
             continue
 
         match = MAIN_TITLE_BOLD_PATTERN.match(line)
@@ -756,6 +785,8 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         await processing_msg.edit_text("🔎 Revisando nomes e fidelidade...")
         legend = enforce_entity_fidelity(corrected_transcript, legend)
         logger.info(f"Legenda revisada ({len(legend)} chars)")
+        legend = strip_model_wrappers(legend)
+        logger.info(f"Legenda sem wrappers de markdown ({len(legend)} chars)")
         legend = sanitize_telegram_html(legend)
         legend = force_main_title_uppercase(legend)
         logger.info(f"Legenda sanitizada para HTML Telegram ({len(legend)} chars)")
