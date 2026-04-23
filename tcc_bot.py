@@ -44,6 +44,7 @@ ALLOWED_TELEGRAM_TAG_PATTERN = re.compile(r"</?(b|i)>", re.IGNORECASE)
 MAIN_TITLE_BOLD_PATTERN = re.compile(r"^(?P<prefix>.*?<b>)(?P<title>.*?)(?P<suffix></b>.*)$", re.IGNORECASE)
 CODE_FENCE_LINE_PATTERN = re.compile(r"^\s*```(?:html)?\s*$", re.IGNORECASE)
 LANGUAGE_HINT_LINE_PATTERN = re.compile(r"^\s*html\s*$", re.IGNORECASE)
+HTML_TAG_PATTERN = re.compile(r"<[^>]+>")
 
 
 def _get_retry_delay(response: httpx.Response, attempt: int) -> float:
@@ -172,6 +173,18 @@ def force_main_title_uppercase(text: str) -> str:
         break
 
     return "\n".join(lines)
+
+
+def _strip_html_tags(text: str) -> str:
+    return HTML_TAG_PATTERN.sub("", text or "")
+
+
+def legend_needs_compaction(legend: str) -> bool:
+    plain_text = _strip_html_tags(legend)
+    non_empty_lines = [line.strip() for line in plain_text.splitlines() if line.strip()]
+    bullet_count = sum(1 for line in non_empty_lines if line.startswith("-"))
+
+    return len(plain_text) > 1050 or len(non_empty_lines) > 14 or bullet_count > 6
 
 
 def _extract_chat_completion_text(response: httpx.Response, action_name: str) -> tuple[str, str | None]:
@@ -594,28 +607,33 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - Responda apenas com HTML valido para Telegram.
 - Abra com um titulo obvio em CAIXA ALTA: emoji + <b>TITULO</b>.
 - O titulo deve refletir de forma direta o tema que o locutor introduziu. Nao invente titulo criativo.
-- Organize a legenda em 3 ou 4 blocos no maximo.
+- Organize a legenda em 3 blocos por padrao. Use 4 apenas se cortar uma ideia central.
 - Use subtitulos funcionais em CAIXA ALTA quando ajudarem a entender os blocos, mas evite cara de slide, apostila ou relatorio.
+- Prefira 4 ou 5 bullets no total. Use 6 apenas se for realmente indispensavel.
 - Cada bullet precisa ter verbo e contexto minimo para fazer sentido sozinho.
+- Cada bullet deve caber em uma frase principal. So use uma segunda oracao curta se sem ela a ideia ficar manca.
+- Se varios exemplos sustentam o mesmo ponto, escolha o mais forte em vez de listar todos.
 - Cada bloco deve ser enxuto: 1 ou 2 bullets fortes, sem texto amontoado.
 - Use <b> para nomes, times e pontos-chave.
 - Use <i> para ressalvas, nuances e alertas.
 - Use emojis com variedade e criterio, sem repetir sempre os mesmos.
 - Nunca use Markdown com asteriscos ou underscores.
 - Nao termine com frase automatica de encerramento.
-- A legenda inteira deve caber aproximadamente em uma tela de celular, mesmo para audios longos.
+- A legenda inteira deve parecer limpa em um print do Telegram, nao um artigo espremido.
+- Se estiver ficando grande demais, comprima mais em vez de abrir novos detalhes.
 </formato>
 
 <estilo>
 - Direto, natural e vivo.
 - Humano, nunca robótico.
-- Menos telegrafico, mais frase completa.
+- Frase completa, mas curta.
 - Tom entre sobrio e comunicativo.
 - Pode ter ritmo e personalidade visual, mas sem floreio literario.
 - Soe como o proprio locutor escrevendo, nao como um redator externo nem como IA.
 - Evite subtitulos secos demais como "CRITERIOS E EXEMPLOS PRATICOS", "AMPLITUDE DA ANALISE", "ANALISE COLETIVA E INTERPRETACAO DOS PERCENTUAIS" quando houver uma forma mais natural de dizer.
 - Prefira subtitulos curtos, claros e vivos, como "COMO EU USO ISSO", "NA PRATICA", "PONTO DE ATENCAO", "ONDE EU GOSTO MAIS", se isso combinar com o audio.
 - Evite jargoes artificiais e expressoes como "Em resumo", "Vale ressaltar", "Portanto", "Panorama" e similares, a menos que isso tenha sido dito.
+- Evite bullets longos com varios nomes, varios numeros e varias ressalvas empilhadas.
 </estilo>
 
 <guia_de_frase>
@@ -652,6 +670,24 @@ Regras:
 
 Saida:
 - Devolva apenas a legenda final em HTML.
+"""
+
+LEGEND_COMPACTION_PROMPT = """
+Voce recebe uma transcricao corrigida e uma legenda em HTML para Telegram.
+
+Sua tarefa e encurtar a legenda quando ela estiver grande demais, sem deixar o texto seco, robotico ou com cara de apostila.
+
+Regras:
+- Preserve o titulo principal, o tom humano e a organizacao por blocos.
+- Preserve nomes de jogadores, tecnicos e times exatamente como aparecem.
+- Mantenha 3 blocos por padrao. Use 4 apenas se for indispensavel para nao cortar uma ideia central.
+- Mire em 4 ou 5 bullets no total.
+- Cada bullet deve ter uma frase principal. So use uma segunda oracao curta se ela for indispensavel.
+- Corte exemplos redundantes, listas extensas, explicacoes que repetem a mesma ideia e excesso de numeros.
+- Se dois bullets disserem quase a mesma coisa, una ou elimine o mais fraco.
+- Nao invente nada, nao troque nomes e nao mude o sentido do audio.
+- Nao transforme a legenda em texto frio ou generico.
+- Devolva apenas HTML valido para Telegram.
 """
 
 
@@ -700,11 +736,11 @@ def get_legend_max_tokens(transcript: str) -> int:
     word_count = len(transcript.split())
 
     if word_count <= 220:
-        return 360
+        return 320
     elif word_count <= 500:
-        return 520
+        return 420
     else:
-        return 700
+        return 560
 
 def generate_legend(transcript: str) -> str:
     return _chat_completion_with_auto_continue(
@@ -716,18 +752,65 @@ def generate_legend(transcript: str) -> str:
             {
                 "role": "user",
                 "content": (
-                    "Organize a legenda por blocos de assunto, sem seguir obrigatoriamente a ordem cronologica do audio.\n\n"
+                    "Organize a legenda por blocos de assunto, sem seguir obrigatoriamente a ordem cronologica do audio. "
+                    "Priorize limpeza visual e economia de texto: so mantenha o que realmente carrega a ideia.\n\n"
                     f"Transcricao do audio:\n\n{transcript}"
                 )
             }
         ],
-        temperature=0.4,
+        temperature=0.35,
         max_tokens=get_legend_max_tokens(transcript),
         continue_instruction=(
             "Continue exatamente do ponto em que parou. "
             "Nao reinicie a legenda, nao repita trechos ja escritos e mantenha o mesmo HTML."
         ),
     )
+
+
+def compact_legend_if_needed(transcript: str, legend: str) -> str:
+    if not legend_needs_compaction(legend):
+        return legend
+
+    logger.info("Legenda acima do tamanho alvo. Rodando compactacao (%s chars).", len(legend))
+
+    compacted = _chat_completion_with_auto_continue(
+        action_name="compactacao de legenda",
+        timeout=120.0,
+        model=OPENAI_CAPTION_MODEL,
+        messages=[
+            {"role": "system", "content": LEGEND_COMPACTION_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"Transcricao corrigida:\n\n{transcript}\n\n"
+                    f"Legenda atual:\n\n{legend}"
+                )
+            }
+        ],
+        temperature=0.2,
+        max_tokens=max(min(int(len(legend.split()) * 1.1), 420), 260),
+        continue_instruction=(
+            "Continue exatamente do ponto em que parou. "
+            "Nao reinicie, nao repita e devolva somente o restante da mesma legenda em HTML."
+        ),
+        max_rounds=2,
+    )
+    compacted = strip_model_wrappers(compacted)
+
+    if len(compacted.strip()) < int(len(legend.strip()) * 0.55):
+        logger.warning(
+            "Compactacao encolheu demais a legenda (%s -> %s chars). Mantendo legenda original.",
+            len(legend),
+            len(compacted),
+        )
+        return legend
+
+    if len(_strip_html_tags(compacted)) >= len(_strip_html_tags(legend)):
+        logger.info("Compactacao nao reduziu a legenda de forma util. Mantendo original.")
+        return legend
+
+    logger.info("Legenda compactada (%s -> %s chars).", len(legend), len(compacted))
+    return compacted
 
 
 def enforce_entity_fidelity(transcript: str, legend: str) -> str:
@@ -806,6 +889,10 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         await processing_msg.edit_text("✍️ Gerando legenda...")
         legend = await asyncio.to_thread(generate_legend, corrected_transcript)
         logger.info(f"Legenda gerada ({len(legend)} chars)")
+        legend = strip_model_wrappers(legend)
+        logger.info(f"Legenda sem wrappers apos geracao ({len(legend)} chars)")
+        legend = await asyncio.to_thread(compact_legend_if_needed, corrected_transcript, legend)
+        logger.info(f"Legenda apos checagem de tamanho ({len(legend)} chars)")
         await processing_msg.edit_text("🔎 Revisando nomes e fidelidade...")
         legend = await asyncio.to_thread(enforce_entity_fidelity, corrected_transcript, legend)
         logger.info(f"Legenda revisada ({len(legend)} chars)")
