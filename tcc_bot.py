@@ -11,6 +11,7 @@ import logging
 import io
 import asyncio
 import threading
+import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import httpx
 from telegram import Update
@@ -26,6 +27,109 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 ALLOWED_USER_ID = int(os.getenv('ALLOWED_USER_ID', '0'))
 PORT = int(os.getenv('PORT', '10000'))
+OPENAI_TRANSCRIPTION_MODEL = os.getenv('OPENAI_TRANSCRIPTION_MODEL', 'whisper-1')
+OPENAI_TEXT_MODEL = os.getenv('OPENAI_TEXT_MODEL', 'gpt-4o-mini')
+
+
+class UserFacingError(Exception):
+    """Erro com mensagem segura para exibir no Telegram."""
+
+
+def _get_retry_delay(response: httpx.Response, attempt: int) -> float:
+    retry_after = response.headers.get("retry-after")
+    if retry_after:
+        try:
+            return max(1.0, float(retry_after))
+        except ValueError:
+            pass
+    return min(2 ** (attempt - 1), 8)
+
+
+def _extract_openai_error(response: httpx.Response) -> tuple[str, str | None, str | None]:
+    fallback_message = response.text.strip()
+    message = fallback_message
+    error_type = None
+    error_code = None
+
+    try:
+        payload = response.json()
+    except ValueError:
+        return message, error_type, error_code
+
+    error = payload.get("error") or {}
+    message = error.get("message") or fallback_message
+    error_type = error.get("type")
+    error_code = error.get("code")
+    return message, error_type, error_code
+
+
+def _openai_headers() -> dict[str, str]:
+    return {"Authorization": f"Bearer {OPENAI_API_KEY}"}
+
+
+def _post_openai(url: str, *, timeout: float, action_name: str, **kwargs) -> httpx.Response:
+    max_attempts = 3
+
+    with httpx.Client(timeout=timeout) as client:
+        for attempt in range(1, max_attempts + 1):
+            response = client.post(url, headers=_openai_headers(), **kwargs)
+
+            if response.status_code < 400:
+                return response
+
+            message, error_type, error_code = _extract_openai_error(response)
+
+            if response.status_code == 429:
+                if error_code == "insufficient_quota":
+                    raise UserFacingError(
+                        "❌ A conta da OpenAI está sem créditos ou sem billing ativo. "
+                        "Confira saldo e faturamento no projeto da chave API."
+                    )
+
+                if attempt < max_attempts:
+                    delay = _get_retry_delay(response, attempt)
+                    logger.warning(
+                        "%s recebeu 429 (%s/%s). Nova tentativa em %.1fs. type=%s code=%s message=%s",
+                        action_name,
+                        attempt,
+                        max_attempts,
+                        delay,
+                        error_type,
+                        error_code,
+                        message,
+                    )
+                    time.sleep(delay)
+                    continue
+
+                raise UserFacingError(
+                    "❌ A OpenAI limitou temporariamente as requisições. "
+                    "Tente novamente em alguns segundos."
+                )
+
+            if response.status_code == 401:
+                raise UserFacingError(
+                    "❌ A chave da OpenAI foi rejeitada. Verifique a variável OPENAI_API_KEY."
+                )
+
+            if response.status_code == 403:
+                raise UserFacingError(
+                    "❌ O projeto da OpenAI não tem permissão para esse modelo ou endpoint."
+                )
+
+            try:
+                response.raise_for_status()
+            except httpx.HTTPStatusError as exc:
+                logger.error(
+                    "Erro OpenAI em %s: status=%s type=%s code=%s message=%s",
+                    action_name,
+                    response.status_code,
+                    error_type,
+                    error_code,
+                    message,
+                )
+                raise exc
+
+    raise RuntimeError(f"Falha inesperada ao executar {action_name}")
 
 
 def load_player_reference():
@@ -277,41 +381,36 @@ def start_health_server():
 
 def transcribe_audio(audio_bytes: bytes, filename: str = "audio.ogg") -> str:
     audio_io = io.BytesIO(audio_bytes)
-    with httpx.Client(timeout=120.0) as client:
-        response = client.post(
-            "https://api.openai.com/v1/audio/transcriptions",
-            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
-            files={"file": (filename, audio_io, "audio/ogg")},
-            data={
-                "model": "whisper-1",
-                "language": "pt",
-                "prompt": f"Cartola FC, Campeonato Brasileiro. Nomes: {WHISPER_NAMES[:400]}"
-            }
-        )
-        response.raise_for_status()
-        return response.json()["text"]
+    response = _post_openai(
+        "https://api.openai.com/v1/audio/transcriptions",
+        timeout=120.0,
+        action_name="transcrição",
+        files={"file": (filename, audio_io, "audio/ogg")},
+        data={
+            "model": OPENAI_TRANSCRIPTION_MODEL,
+            "language": "pt",
+            "prompt": f"Cartola FC, Campeonato Brasileiro. Nomes: {WHISPER_NAMES[:400]}"
+        }
+    )
+    return response.json()["text"]
 
 
 def correct_player_names(transcript: str) -> str:
-    with httpx.Client(timeout=180.0) as client:
-        response = client.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {OPENAI_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": "gpt-4o",
-                "messages": [
-                    {"role": "system", "content": NAMES_CORRECTION_PROMPT},
-                    {"role": "user", "content": transcript}
-                ],
-                "temperature": 0,
-                "max_tokens": 2500
-            }
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
+    response = _post_openai(
+        "https://api.openai.com/v1/chat/completions",
+        timeout=180.0,
+        action_name="correção de nomes",
+        json={
+            "model": OPENAI_TEXT_MODEL,
+            "messages": [
+                {"role": "system", "content": NAMES_CORRECTION_PROMPT},
+                {"role": "user", "content": transcript}
+            ],
+            "temperature": 0,
+            "max_tokens": 2500
+        }
+    )
+    return response.json()["choices"][0]["message"]["content"].strip()
         
 def get_legend_max_tokens(transcript: str) -> int:
     word_count = len(transcript.split())
@@ -334,7 +433,7 @@ def generate_legend(transcript: str) -> str:
                 "Content-Type": "application/json"
             },
             json={
-                "model": "gpt-4o",
+                "model": OPENAI_TEXT_MODEL,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": f"Transcrição do áudio:\n\n{transcript}"}
@@ -386,6 +485,9 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         await processing_msg.edit_text(legend, parse_mode='HTML')
         logger.info("✅ Legenda enviada com sucesso.")
 
+    except UserFacingError as e:
+        logger.warning(f"Erro tratado para usuário: {e}")
+        await update.message.reply_text(str(e))
     except httpx.HTTPStatusError as e:
         logger.error(f"Erro OpenAI: {e.response.status_code} - {e.response.text}")
         await update.message.reply_text(

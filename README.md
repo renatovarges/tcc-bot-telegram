@@ -53,6 +53,8 @@ No Render, vá para **Environment** e adicione:
 | `TELEGRAM_BOT_TOKEN` | Seu token do bot (começa com números) |
 | `OPENAI_API_KEY` | Sua chave OpenAI (começa com `sk-proj-`) |
 | `ALLOWED_USER_ID` | Seu ID de usuário do Telegram |
+| `OPENAI_TRANSCRIPTION_MODEL` | Opcional. Padrão: `whisper-1` |
+| `OPENAI_TEXT_MODEL` | Opcional. Padrão: `gpt-4o-mini` |
 
 ### Passo 5: Deploy
 
@@ -103,6 +105,11 @@ Para alterar o prompt de legendagem, edite o `SYSTEM_PROMPT` no arquivo `tcc_bot
 **Erro de autenticação OpenAI:**
 - Verifique se a chave está correta
 - Verifique se você tem créditos disponíveis
+
+**Erro 429 da OpenAI:**
+- Se a mensagem citar falta de créditos/quota, ative billing ou adicione saldo no projeto da chave API
+- Se for rate limit temporário, aguarde alguns segundos e tente novamente
+- O bot agora faz retry automático em 429 temporário, mas não consegue contornar falta de saldo
 
 **Transcrição lenta:**
 - Normal para áudios longos (5-10 min)
