@@ -609,14 +609,16 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - O titulo deve refletir de forma direta o tema que o locutor introduziu. Nao invente titulo criativo.
 - Organize a legenda em 3 blocos por padrao. Use 4 apenas se cortar uma ideia central.
 - Use subtitulos funcionais em CAIXA ALTA quando ajudarem a entender os blocos, mas evite cara de slide, apostila ou relatorio.
+- Mantenha 1 emoji no titulo e, quando houver subtitulo, 1 emoji por bloco para guiar a leitura.
 - Prefira 4 ou 5 bullets no total. Use 6 apenas se for realmente indispensavel.
 - Cada bullet precisa ter verbo e contexto minimo para fazer sentido sozinho.
 - Cada bullet deve caber em uma frase principal. So use uma segunda oracao curta se sem ela a ideia ficar manca.
+- A pontuacao deve ser natural e ajudar o texto a respirar.
 - Se varios exemplos sustentam o mesmo ponto, escolha o mais forte em vez de listar todos.
 - Cada bloco deve ser enxuto: 1 ou 2 bullets fortes, sem texto amontoado.
 - Use <b> para nomes, times e pontos-chave.
 - Use <i> para ressalvas, nuances e alertas.
-- Use emojis com variedade e criterio, sem repetir sempre os mesmos.
+- Use emojis com variedade e criterio, inclusive nos subtitulos, sem repetir sempre os mesmos.
 - Nunca use Markdown com asteriscos ou underscores.
 - Nao termine com frase automatica de encerramento.
 - A legenda inteira deve parecer limpa em um print do Telegram, nao um artigo espremido.
@@ -627,6 +629,7 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - Direto, natural e vivo.
 - Humano, nunca robótico.
 - Frase completa, mas curta.
+- Mesmo compacta, a legenda precisa soar fluida, bem pontuada e viva.
 - Tom entre sobrio e comunicativo.
 - Pode ter ritmo e personalidade visual, mas sem floreio literario.
 - Soe como o proprio locutor escrevendo, nao como um redator externo nem como IA.
@@ -680,10 +683,13 @@ Sua tarefa e encurtar a legenda quando ela estiver grande demais, sem deixar o t
 Regras:
 - Preserve o titulo principal, o tom humano e a organizacao por blocos.
 - Preserve nomes de jogadores, tecnicos e times exatamente como aparecem.
+- Preserve ou recoloque 1 emoji no titulo e 1 emoji por bloco quando isso ajudar a leitura.
 - Mantenha 3 blocos por padrao. Use 4 apenas se for indispensavel para nao cortar uma ideia central.
 - Mire em 4 ou 5 bullets no total.
 - Cada bullet deve ter uma frase principal. So use uma segunda oracao curta se ela for indispensavel.
+- Mantenha a pontuacao natural, com leitura fluida.
 - Corte exemplos redundantes, listas extensas, explicacoes que repetem a mesma ideia e excesso de numeros.
+- Encurte dentro dos bullets, nao cortando a identidade visual da legenda.
 - Se dois bullets disserem quase a mesma coisa, una ou elimine o mais fraco.
 - Nao invente nada, nao troque nomes e nao mude o sentido do audio.
 - Nao transforme a legenda em texto frio ou generico.
@@ -758,7 +764,7 @@ def generate_legend(transcript: str) -> str:
                 )
             }
         ],
-        temperature=0.35,
+        temperature=0.4,
         max_tokens=get_legend_max_tokens(transcript),
         continue_instruction=(
             "Continue exatamente do ponto em que parou. "
@@ -787,7 +793,7 @@ def compact_legend_if_needed(transcript: str, legend: str) -> str:
                 )
             }
         ],
-        temperature=0.2,
+        temperature=0.3,
         max_tokens=max(min(int(len(legend.split()) * 1.1), 420), 260),
         continue_instruction=(
             "Continue exatamente do ponto em que parou. "
