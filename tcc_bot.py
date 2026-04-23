@@ -41,6 +41,7 @@ class UserFacingError(Exception):
 
 ALLOWED_TELEGRAM_TAGS = {"b", "i"}
 ALLOWED_TELEGRAM_TAG_PATTERN = re.compile(r"</?(b|i)>", re.IGNORECASE)
+MAIN_TITLE_BOLD_PATTERN = re.compile(r"^(?P<prefix>.*?<b>)(?P<title>.*?)(?P<suffix></b>.*)$", re.IGNORECASE)
 
 
 def _get_retry_delay(response: httpx.Response, attempt: int) -> float:
@@ -110,6 +111,30 @@ def sanitize_telegram_html(text: str) -> str:
         parts.append(f"</{stack.pop()}>")
 
     return "".join(parts)
+
+
+def force_main_title_uppercase(text: str) -> str:
+    if not text:
+        return text
+
+    lines = text.splitlines()
+
+    for index, line in enumerate(lines):
+        if not line.strip():
+            continue
+
+        match = MAIN_TITLE_BOLD_PATTERN.match(line)
+        if match:
+            lines[index] = (
+                f"{match.group('prefix')}"
+                f"{match.group('title').upper()}"
+                f"{match.group('suffix')}"
+            )
+        else:
+            lines[index] = f"<b>{line.strip().upper()}</b>"
+        break
+
+    return "\n".join(lines)
 
 
 def _extract_chat_completion_text(response: httpx.Response, action_name: str) -> tuple[str, str | None]:
@@ -530,7 +555,7 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 
 <formato>
 - Responda apenas com HTML valido para Telegram.
-- Abra com um titulo obvio: emoji + <b>TITULO</b>.
+- Abra com um titulo obvio em CAIXA ALTA: emoji + <b>TITULO</b>.
 - O titulo deve refletir de forma direta o tema que o locutor introduziu. Nao invente titulo criativo.
 - Organize a legenda em 3 ou 4 blocos no maximo.
 - Use subtitulos funcionais em CAIXA ALTA quando ajudarem a entender os blocos.
@@ -732,6 +757,7 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         legend = enforce_entity_fidelity(corrected_transcript, legend)
         logger.info(f"Legenda revisada ({len(legend)} chars)")
         legend = sanitize_telegram_html(legend)
+        legend = force_main_title_uppercase(legend)
         logger.info(f"Legenda sanitizada para HTML Telegram ({len(legend)} chars)")
 
         await processing_msg.edit_text(legend, parse_mode='HTML')
