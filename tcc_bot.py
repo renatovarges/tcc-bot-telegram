@@ -27,8 +27,10 @@ TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 ALLOWED_USER_ID = int(os.getenv('ALLOWED_USER_ID', '0'))
 PORT = int(os.getenv('PORT', '10000'))
-OPENAI_TRANSCRIPTION_MODEL = os.getenv('OPENAI_TRANSCRIPTION_MODEL', 'whisper-1')
-OPENAI_TEXT_MODEL = os.getenv('OPENAI_TEXT_MODEL', 'gpt-4o-mini')
+LEGACY_OPENAI_TEXT_MODEL = os.getenv('OPENAI_TEXT_MODEL')
+OPENAI_TRANSCRIPTION_MODEL = os.getenv('OPENAI_TRANSCRIPTION_MODEL', 'gpt-4o-mini-transcribe')
+OPENAI_NAMES_MODEL = os.getenv('OPENAI_NAMES_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-4.1-mini')
+OPENAI_CAPTION_MODEL = os.getenv('OPENAI_CAPTION_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-4.1')
 
 
 class UserFacingError(Exception):
@@ -209,7 +211,7 @@ SAÍDA:
 - Nenhum comentário. Nenhuma explicação.
 """
 
-SYSTEM_PROMPT = f"""Você converte transcrições de áudio em legendas para um grupo de Telegram de análise do Cartola FC.
+LEGACY_SYSTEM_PROMPT = f"""Você converte transcrições de áudio em legendas para um grupo de Telegram de análise do Cartola FC.
 
 ## REGRAS DE OURO
 
@@ -377,6 +379,57 @@ def start_health_server():
     server.serve_forever()
 
 
+SYSTEM_PROMPT = """
+Voce cria legendas em HTML para Telegram a partir de uma transcricao ja corrigida.
+
+<objetivo>
+Transforme a fala em uma legenda curta, fiel e agradavel de ler, com cara de texto escrito pelo proprio locutor.
+</objetivo>
+
+<regras_inviolaveis>
+- Use apenas informacoes ditas na transcricao.
+- Nao invente contexto, causa, consequencia, comparacao, estatistica ou conclusao que nao foi falada.
+- Use exatamente os nomes de jogadores, tecnicos e times como aparecem na transcricao recebida.
+- Se um nome estiver ambiguo, preserve como veio na transcricao.
+- Resuma removendo repeticao, muleta e desvios, sem amputar a ideia principal.
+</regras_inviolaveis>
+
+<formato>
+- Responda apenas com HTML valido para Telegram.
+- Abra com um titulo curto: emoji + <b>TITULO</b>.
+- Depois escreva 3 a 6 bullets ou blocos curtos.
+- Cada bullet precisa ter verbo e contexto minimo para fazer sentido sozinho.
+- So use subtitulo quando houver mudanca clara de assunto.
+- Use <b> para nomes, times e pontos-chave.
+- Use <i> para ressalvas, nuances e alertas.
+- Use emojis com variedade e criterio, sem repetir sempre os mesmos.
+- Nunca use Markdown com asteriscos ou underscores.
+- Nao termine com frase automatica de encerramento.
+</formato>
+
+<estilo>
+- Direto, natural e vivo.
+- Menos telegrafico, mais frase completa.
+- Tom entre sobrio e comunicativo.
+- Pode ter ritmo e personalidade visual, mas sem floreio literario.
+- Evite expressoes como "Em resumo", "Vale ressaltar", "Portanto", "Panorama" e similares, a menos que isso tenha sido dito.
+</estilo>
+
+<guia_de_frase>
+Ruim: "- 4-4-2: Equilibrio com laterais."
+Bom: "- 4-4-2: E um esquema mais equilibrado, sem abrir mao dos laterais, numa rodada com menos opcoes de atacantes."
+</guia_de_frase>
+
+<checklist_interno>
+Antes de responder, verifique em silencio:
+1. Nenhum nome de time ou jogador foi trocado por memoria.
+2. Nenhum ponto foi inventado.
+3. Os bullets fazem sentido sozinhos.
+4. Os emojis combinam com o assunto e nao estao repetitivos.
+</checklist_interno>
+"""
+
+
 # ── Funções de transcrição, correção de nomes e legendagem ───────────────────
 
 def transcribe_audio(audio_bytes: bytes, filename: str = "audio.ogg") -> str:
@@ -401,7 +454,7 @@ def correct_player_names(transcript: str) -> str:
         timeout=180.0,
         action_name="correção de nomes",
         json={
-            "model": OPENAI_TEXT_MODEL,
+            "model": OPENAI_NAMES_MODEL,
             "messages": [
                 {"role": "system", "content": NAMES_CORRECTION_PROMPT},
                 {"role": "user", "content": transcript}
@@ -433,12 +486,12 @@ def generate_legend(transcript: str) -> str:
                 "Content-Type": "application/json"
             },
             json={
-                "model": OPENAI_TEXT_MODEL,
+                "model": OPENAI_CAPTION_MODEL,
                 "messages": [
                     {"role": "system", "content": SYSTEM_PROMPT},
                     {"role": "user", "content": f"Transcrição do áudio:\n\n{transcript}"}
                 ],
-                "temperature": 0.2,
+                "temperature": 0.35,
                 "max_tokens": max_tokens
             }
         )

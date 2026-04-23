@@ -53,8 +53,10 @@ No Render, vá para **Environment** e adicione:
 | `TELEGRAM_BOT_TOKEN` | Seu token do bot (começa com números) |
 | `OPENAI_API_KEY` | Sua chave OpenAI (começa com `sk-proj-`) |
 | `ALLOWED_USER_ID` | Seu ID de usuário do Telegram |
-| `OPENAI_TRANSCRIPTION_MODEL` | Opcional. Padrão: `whisper-1` |
-| `OPENAI_TEXT_MODEL` | Opcional. Padrão: `gpt-4o-mini` |
+| `OPENAI_TRANSCRIPTION_MODEL` | Opcional. Padrão: `gpt-4o-mini-transcribe` |
+| `OPENAI_NAMES_MODEL` | Opcional. Padrão: `gpt-4.1-mini` |
+| `OPENAI_CAPTION_MODEL` | Opcional. Padrão: `gpt-4.1` |
+| `OPENAI_TEXT_MODEL` | Opcional. Compatibilidade legada. Se definido, vira fallback para nomes/legenda |
 
 ### Passo 5: Deploy
 
