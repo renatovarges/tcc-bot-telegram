@@ -180,7 +180,7 @@ CONTEXTO:
 A transcrição foi gerada pelo Whisper (reconhecimento de fala). O Whisper escreve nomes foneticamente — frequentemente errado. Seu trabalho é identificar e corrigir esses erros usando a referência oficial abaixo.
 
 TAREFA:
-Devolver a MESMA transcrição, corrigindo APENAS nomes de jogadores e técnicos de futebol.
+Devolver a MESMA transcrição, corrigindo APENAS nomes de jogadores, técnicos e times quando houver erro claro de reconhecimento.
 
 REGRAS GERAIS:
 1. Não resuma, não reorganize, não reescreva frases.
@@ -189,6 +189,7 @@ REGRAS GERAIS:
 4. Quando um time for mencionado no contexto, consulte a seção "ELENCOS POR TIME" para identificar qual jogador é o correto — use o elenco do time como chave de desambiguação.
 5. Se houver dúvida real entre dois jogadores distintos sem contexto de time, mantenha como está.
 6. Nunca invente um nome que não esteja na referência abaixo.
+7. Para nomes de times, corrija apenas quando houver erro claro do Whisper. Não troque uma forma válida por outra só por padronização.
 
 ERROS CONHECIDOS DO WHISPER — CORRIJA SEMPRE:
 - "Caio Jorge" → "Kaio Jorge" (não existe Caio Jorge no Brasileirão)
@@ -205,6 +206,9 @@ ERROS CONHECIDOS DO WHISPER — CORRIJA SEMPRE:
 
 REFERÊNCIA OFICIAL (Apelido · Time · Nome completo — use o time para desambiguar pelo contexto do áudio):
 {JOGADORES_REFERENCIA if JOGADORES_REFERENCIA else JOGADORES_LIST}
+
+ELENCOS POR TIME:
+{TIMES_REFERENCIA if TIMES_REFERENCIA else "Sem referência adicional por time."}
 
 SAÍDA:
 - Devolva apenas a transcrição corrigida.
@@ -383,7 +387,7 @@ SYSTEM_PROMPT = """
 Voce cria legendas em HTML para Telegram a partir de uma transcricao ja corrigida.
 
 <objetivo>
-Transforme a fala em uma legenda curta, fiel e agradavel de ler, com cara de texto escrito pelo proprio locutor.
+Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celular, com cara de texto escrito pelo proprio locutor.
 </objetivo>
 
 <regras_inviolaveis>
@@ -391,28 +395,35 @@ Transforme a fala em uma legenda curta, fiel e agradavel de ler, com cara de tex
 - Nao invente contexto, causa, consequencia, comparacao, estatistica ou conclusao que nao foi falada.
 - Use exatamente os nomes de jogadores, tecnicos e times como aparecem na transcricao recebida.
 - Se um nome estiver ambiguo, preserve como veio na transcricao.
+- E permitido reorganizar a ordem das ideias e cruzar pontos de blocos diferentes do audio.
 - Resuma removendo repeticao, muleta e desvios, sem amputar a ideia principal.
+- Fidelidade e obrigatoria; cronologia literal nao e obrigatoria.
 </regras_inviolaveis>
 
 <formato>
 - Responda apenas com HTML valido para Telegram.
-- Abra com um titulo curto: emoji + <b>TITULO</b>.
-- Depois escreva 3 a 6 bullets ou blocos curtos.
+- Abra com um titulo obvio: emoji + <b>TITULO</b>.
+- O titulo deve refletir de forma direta o tema que o locutor introduziu. Nao invente titulo criativo.
+- Organize a legenda em 3 ou 4 blocos no maximo.
+- Use subtitulos funcionais em CAIXA ALTA quando ajudarem a entender os blocos.
 - Cada bullet precisa ter verbo e contexto minimo para fazer sentido sozinho.
-- So use subtitulo quando houver mudanca clara de assunto.
+- Cada bloco deve ser enxuto: 1 ou 2 bullets fortes, sem texto amontoado.
 - Use <b> para nomes, times e pontos-chave.
 - Use <i> para ressalvas, nuances e alertas.
 - Use emojis com variedade e criterio, sem repetir sempre os mesmos.
 - Nunca use Markdown com asteriscos ou underscores.
 - Nao termine com frase automatica de encerramento.
+- A legenda inteira deve caber aproximadamente em uma tela de celular, mesmo para audios longos.
 </formato>
 
 <estilo>
 - Direto, natural e vivo.
+- Humano, nunca robótico.
 - Menos telegrafico, mais frase completa.
 - Tom entre sobrio e comunicativo.
 - Pode ter ritmo e personalidade visual, mas sem floreio literario.
-- Evite expressoes como "Em resumo", "Vale ressaltar", "Portanto", "Panorama" e similares, a menos que isso tenha sido dito.
+- Soe como o proprio locutor escrevendo, nao como um redator externo nem como IA.
+- Evite jargoes artificiais e expressoes como "Em resumo", "Vale ressaltar", "Portanto", "Panorama" e similares, a menos que isso tenha sido dito.
 </estilo>
 
 <guia_de_frase>
@@ -425,8 +436,28 @@ Antes de responder, verifique em silencio:
 1. Nenhum nome de time ou jogador foi trocado por memoria.
 2. Nenhum ponto foi inventado.
 3. Os bullets fazem sentido sozinhos.
-4. Os emojis combinam com o assunto e nao estao repetitivos.
+4. O titulo esta obvio e fiel ao que o locutor introduziu.
+5. Os subtitulos ajudam a leitura.
+6. Os emojis combinam com o assunto e nao estao repetitivos.
 </checklist_interno>
+"""
+
+ENTITY_FIDELITY_PROMPT = """
+Voce recebe uma transcricao corrigida e uma legenda em HTML.
+
+Sua tarefa e devolver a MESMA legenda, alterando apenas o que for necessario para garantir fidelidade total a nomes de jogadores, tecnicos e times.
+
+Regras:
+- Preserve a estrutura, os subtitulos, os emojis, o tom e o HTML da legenda.
+- Corrija apenas nomes e trechos diretamente ligados a nomes.
+- Se a legenda mencionar um nome que nao aparece de forma sustentada pela transcricao, substitua pelo nome correto da transcricao.
+- Se nao houver nome correto claro na transcricao, remova apenas o fragmento problemático sem reescrever o restante.
+- Nao invente nomes.
+- Nao resuma de novo.
+- Nao adicione comentarios.
+
+Saida:
+- Devolva apenas a legenda final em HTML.
 """
 
 
@@ -469,34 +500,60 @@ def get_legend_max_tokens(transcript: str) -> int:
     word_count = len(transcript.split())
 
     if word_count <= 220:
-        return 300
+        return 260
     elif word_count <= 500:
-        return 450
+        return 340
     else:
-        return 650
+        return 420
 
 def generate_legend(transcript: str) -> str:
     max_tokens = get_legend_max_tokens(transcript)
 
-    with httpx.Client(timeout=180.0) as client:
-        response = client.post(
-            "https://api.openai.com/v1/chat/completions",
-            headers={
-                "Authorization": f"Bearer {OPENAI_API_KEY}",
-                "Content-Type": "application/json"
-            },
-            json={
-                "model": OPENAI_CAPTION_MODEL,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": f"Transcrição do áudio:\n\n{transcript}"}
-                ],
-                "temperature": 0.35,
-                "max_tokens": max_tokens
-            }
-        )
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"].strip()
+    response = _post_openai(
+        "https://api.openai.com/v1/chat/completions",
+        timeout=180.0,
+        action_name="geracao de legenda",
+        json={
+            "model": OPENAI_CAPTION_MODEL,
+            "messages": [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": (
+                        "Organize a legenda por blocos de assunto, sem seguir obrigatoriamente a ordem cronologica do audio.\n\n"
+                        f"Transcricao do audio:\n\n{transcript}"
+                    )
+                }
+            ],
+            "temperature": 0.3,
+            "max_tokens": max_tokens
+        }
+    )
+    return response.json()["choices"][0]["message"]["content"].strip()
+
+
+def enforce_entity_fidelity(transcript: str, legend: str) -> str:
+    response = _post_openai(
+        "https://api.openai.com/v1/chat/completions",
+        timeout=120.0,
+        action_name="revisao final de nomes",
+        json={
+            "model": OPENAI_NAMES_MODEL,
+            "messages": [
+                {"role": "system", "content": ENTITY_FIDELITY_PROMPT},
+                {
+                    "role": "user",
+                    "content": (
+                        f"Transcricao corrigida:\n\n{transcript}\n\n"
+                        f"Legenda gerada:\n\n{legend}"
+                    )
+                }
+            ],
+            "temperature": 0,
+            "max_tokens": max(len(legend.split()) + 120, 220)
+        }
+    )
+    return response.json()["choices"][0]["message"]["content"].strip()
 
 
 # ── Handlers do Telegram ──────────────────────────────────────────────────────
@@ -534,6 +591,9 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         await processing_msg.edit_text("✍️ Gerando legenda...")
         legend = generate_legend(corrected_transcript)
         logger.info(f"Legenda gerada ({len(legend)} chars)")
+        await processing_msg.edit_text("🔎 Revisando nomes e fidelidade...")
+        legend = enforce_entity_fidelity(corrected_transcript, legend)
+        logger.info(f"Legenda revisada ({len(legend)} chars)")
 
         await processing_msg.edit_text(legend, parse_mode='HTML')
         logger.info("✅ Legenda enviada com sucesso.")
