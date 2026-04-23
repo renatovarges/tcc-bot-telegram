@@ -131,6 +131,72 @@ def _extract_chat_completion_text(response: httpx.Response, action_name: str) ->
     return content, finish_reason
 
 
+def _merge_with_overlap(base: str, addition: str) -> str:
+    if not base:
+        return addition
+    if not addition:
+        return base
+
+    addition = addition.lstrip()
+    max_overlap = min(len(base), len(addition), 200)
+
+    for overlap in range(max_overlap, 19, -1):
+        if base[-overlap:] == addition[:overlap]:
+            return base + addition[overlap:]
+
+    if addition and addition in base[-400:]:
+        return base
+
+    return base + addition
+
+
+def _chat_completion_with_auto_continue(
+    *,
+    action_name: str,
+    timeout: float,
+    model: str,
+    messages: list[dict[str, str]],
+    temperature: float,
+    max_tokens: int,
+    continue_instruction: str,
+    max_rounds: int = 4,
+) -> str:
+    conversation = [dict(message) for message in messages]
+    combined_text = ""
+
+    for round_index in range(1, max_rounds + 1):
+        response = _post_openai(
+            "https://api.openai.com/v1/chat/completions",
+            timeout=timeout,
+            action_name=action_name,
+            json={
+                "model": model,
+                "messages": conversation,
+                "temperature": temperature,
+                "max_tokens": max_tokens,
+            }
+        )
+        chunk, finish_reason = _extract_chat_completion_text(response, action_name)
+        combined_text = _merge_with_overlap(combined_text, chunk)
+
+        if finish_reason != "length":
+            return combined_text.strip()
+
+        logger.warning(
+            "%s foi cortado por limite de tokens na rodada %s. Pedindo continuação automática.",
+            action_name,
+            round_index,
+        )
+
+        conversation.extend([
+            {"role": "assistant", "content": chunk},
+            {"role": "user", "content": continue_instruction},
+        ])
+
+    logger.warning("%s ainda terminou cortado após %s rodadas.", action_name, max_rounds)
+    return combined_text.strip()
+
+
 def _post_openai(url: str, *, timeout: float, action_name: str, **kwargs) -> httpx.Response:
     max_attempts = 3
 
@@ -570,77 +636,51 @@ def get_legend_max_tokens(transcript: str) -> int:
         return 700
 
 def generate_legend(transcript: str) -> str:
-    base_max_tokens = get_legend_max_tokens(transcript)
-    attempts = [base_max_tokens, base_max_tokens + 220]
-    last_legend = ""
-
-    for max_tokens in attempts:
-        response = _post_openai(
-            "https://api.openai.com/v1/chat/completions",
-            timeout=180.0,
-            action_name="geracao de legenda",
-            json={
-                "model": OPENAI_CAPTION_MODEL,
-                "messages": [
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {
-                        "role": "user",
-                        "content": (
-                            "Organize a legenda por blocos de assunto, sem seguir obrigatoriamente a ordem cronologica do audio.\n\n"
-                            f"Transcricao do audio:\n\n{transcript}"
-                        )
-                    }
-                ],
-                "temperature": 0.3,
-                "max_tokens": max_tokens
+    return _chat_completion_with_auto_continue(
+        action_name="geracao de legenda",
+        timeout=180.0,
+        model=OPENAI_CAPTION_MODEL,
+        messages=[
+            {"role": "system", "content": SYSTEM_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    "Organize a legenda por blocos de assunto, sem seguir obrigatoriamente a ordem cronologica do audio.\n\n"
+                    f"Transcricao do audio:\n\n{transcript}"
+                )
             }
-        )
-        last_legend, finish_reason = _extract_chat_completion_text(response, "geração de legenda")
-        if finish_reason != "length":
-            return last_legend
-
-        logger.warning(
-            "Legenda atingiu o limite de tokens com max_tokens=%s. Tentando novamente com limite maior.",
-            max_tokens,
-        )
-
-    return last_legend
+        ],
+        temperature=0.3,
+        max_tokens=get_legend_max_tokens(transcript),
+        continue_instruction=(
+            "Continue exatamente do ponto em que parou. "
+            "Nao reinicie a legenda, nao repita trechos ja escritos e mantenha o mesmo HTML."
+        ),
+    )
 
 
 def enforce_entity_fidelity(transcript: str, legend: str) -> str:
-    base_max_tokens = max(int(len(legend.split()) * 2.6), 420)
-    attempts = [base_max_tokens, base_max_tokens + 220]
-    last_legend = legend
-
-    for max_tokens in attempts:
-        response = _post_openai(
-            "https://api.openai.com/v1/chat/completions",
-            timeout=120.0,
-            action_name="revisao final de nomes",
-            json={
-                "model": OPENAI_NAMES_MODEL,
-                "messages": [
-                    {"role": "system", "content": ENTITY_FIDELITY_PROMPT},
-                    {
-                        "role": "user",
-                        "content": (
-                            f"Transcricao corrigida:\n\n{transcript}\n\n"
-                            f"Legenda gerada:\n\n{legend}"
-                        )
-                    }
-                ],
-                "temperature": 0,
-                "max_tokens": max_tokens
+    last_legend = _chat_completion_with_auto_continue(
+        action_name="revisao final de nomes",
+        timeout=120.0,
+        model=OPENAI_NAMES_MODEL,
+        messages=[
+            {"role": "system", "content": ENTITY_FIDELITY_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"Transcricao corrigida:\n\n{transcript}\n\n"
+                    f"Legenda gerada:\n\n{legend}"
+                )
             }
-        )
-        last_legend, finish_reason = _extract_chat_completion_text(response, "revisão final de nomes")
-        if finish_reason != "length":
-            break
-
-        logger.warning(
-            "Revisão final de nomes atingiu o limite de tokens com max_tokens=%s. Tentando novamente com limite maior.",
-            max_tokens,
-        )
+        ],
+        temperature=0,
+        max_tokens=max(int(len(legend.split()) * 2.6), 420),
+        continue_instruction=(
+            "Continue exatamente do ponto em que parou. "
+            "Nao reinicie, nao repita e devolva somente o restante da mesma legenda em HTML."
+        ),
+    )
 
     if len(last_legend.strip()) < int(len(legend.strip()) * 0.7):
         logger.warning(
