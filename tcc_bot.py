@@ -33,6 +33,7 @@ LEGACY_OPENAI_TEXT_MODEL = os.getenv('OPENAI_TEXT_MODEL')
 OPENAI_TRANSCRIPTION_MODEL = os.getenv('OPENAI_TRANSCRIPTION_MODEL', 'gpt-4o-mini-transcribe')
 OPENAI_NAMES_MODEL = os.getenv('OPENAI_NAMES_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-4.1-mini')
 OPENAI_CAPTION_MODEL = os.getenv('OPENAI_CAPTION_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-4.1')
+OPENAI_STRUCTURE_MODEL = os.getenv('OPENAI_STRUCTURE_MODEL', OPENAI_NAMES_MODEL)
 
 
 class UserFacingError(Exception):
@@ -580,13 +581,15 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - E permitido reorganizar a ordem das ideias e cruzar pontos de blocos diferentes do audio.
 - Resuma removendo repeticao, muleta e desvios, sem amputar a ideia principal.
 - Fidelidade e obrigatoria; cronologia literal nao e obrigatoria.
+- Nunca omita um tema central do audio so para a legenda ficar menor.
 </regras_inviolaveis>
 
 <formato>
 - Responda apenas com HTML valido para Telegram.
 - Abra com um titulo obvio em CAIXA ALTA: emoji + <b>TITULO</b>.
 - O titulo deve refletir de forma direta o tema que o locutor introduziu. Nao invente titulo criativo.
-- Organize a legenda em 3 ou 4 blocos no maximo.
+- Em audios curtos, organize a legenda em 3 ou 4 blocos no maximo.
+- Em audios longos ou com muitos assuntos, pode usar 5 ou 6 blocos compactos.
 - Use subtitulos funcionais em CAIXA ALTA quando ajudarem a entender os blocos.
 - Cada bullet precisa ter verbo e contexto minimo para fazer sentido sozinho.
 - Cada bloco deve ser enxuto: 1 ou 2 bullets fortes, sem texto amontoado.
@@ -595,7 +598,7 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - Use emojis com variedade e criterio, sem repetir sempre os mesmos.
 - Nunca use Markdown com asteriscos ou underscores.
 - Nao termine com frase automatica de encerramento.
-- A legenda inteira deve caber aproximadamente em uma tela de celular, mesmo para audios longos.
+- Prefira caber aproximadamente em uma tela de celular, mas cobertura correta dos temas e mais importante do que caber a qualquer custo.
 </formato>
 
 <estilo>
@@ -622,6 +625,42 @@ Antes de responder, verifique em silencio:
 5. Os subtitulos ajudam a leitura.
 6. Os emojis combinam com o assunto e nao estao repetitivos.
 </checklist_interno>
+"""
+
+COVERAGE_BRIEF_PROMPT = """
+Voce recebe uma transcricao corrigida.
+
+Sua tarefa e mapear os assuntos centrais que NAO podem ser omitidos na legenda final.
+
+Regras:
+- Use apenas o que foi dito na transcricao.
+- Nao escreva legenda.
+- Nao floreie.
+- Liste apenas os temas realmente centrais.
+- Cada item deve ser curto, objetivo e dizer o que precisa aparecer na legenda.
+- Se o audio for curto, liste 3 ou 4 itens.
+- Se o audio for longo ou cobrir muitos assuntos, liste 5 ou 6 itens.
+
+Saida:
+- Devolva uma lista simples, um item por linha, sem numeracao.
+- Cada linha deve seguir o formato: "TEMA: detalhe essencial".
+"""
+
+COVERAGE_ENFORCEMENT_PROMPT = """
+Voce recebe uma transcricao corrigida, um checklist de cobertura e uma legenda em HTML.
+
+Sua tarefa e devolver a MESMA legenda, acrescentando ou ajustando apenas o necessario para que nenhum tema central do checklist fique de fora.
+
+Regras:
+- Preserve o tom humano, a organizacao por blocos, os subtitulos e o HTML.
+- Nao invente nada.
+- Nao troque nomes.
+- Nao alongue sem necessidade.
+- Cada item do checklist precisa aparecer explicitamente ao menos uma vez na legenda final.
+- Se a legenda ja cobrir tudo, devolva-a praticamente igual.
+
+Saida:
+- Devolva apenas a legenda final em HTML.
 """
 
 ENTITY_FIDELITY_PROMPT = """
@@ -678,7 +717,26 @@ def correct_player_names(transcript: str) -> str:
     )
     content, _ = _extract_chat_completion_text(response, "correção de nomes")
     return content
-        
+
+
+def extract_coverage_brief(transcript: str) -> str:
+    return _chat_completion_with_auto_continue(
+        action_name="mapeamento de cobertura",
+        timeout=120.0,
+        model=OPENAI_STRUCTURE_MODEL,
+        messages=[
+            {"role": "system", "content": COVERAGE_BRIEF_PROMPT},
+            {"role": "user", "content": transcript},
+        ],
+        temperature=0,
+        max_tokens=420,
+        continue_instruction=(
+            "Continue exatamente do ponto em que parou, sem reiniciar a lista e sem repetir itens."
+        ),
+        max_rounds=3,
+    )
+
+
 def get_legend_max_tokens(transcript: str) -> int:
     word_count = len(transcript.split())
 
@@ -686,10 +744,12 @@ def get_legend_max_tokens(transcript: str) -> int:
         return 360
     elif word_count <= 500:
         return 520
+    elif word_count <= 900:
+        return 820
     else:
-        return 700
+        return 1050
 
-def generate_legend(transcript: str) -> str:
+def generate_legend(transcript: str, coverage_brief: str) -> str:
     return _chat_completion_with_auto_continue(
         action_name="geracao de legenda",
         timeout=180.0,
@@ -699,6 +759,7 @@ def generate_legend(transcript: str) -> str:
             {
                 "role": "user",
                 "content": (
+                    f"Checklist obrigatoria de cobertura:\n{coverage_brief}\n\n"
                     "Organize a legenda por blocos de assunto, sem seguir obrigatoriamente a ordem cronologica do audio.\n\n"
                     f"Transcricao do audio:\n\n{transcript}"
                 )
@@ -711,6 +772,42 @@ def generate_legend(transcript: str) -> str:
             "Nao reinicie a legenda, nao repita trechos ja escritos e mantenha o mesmo HTML."
         ),
     )
+
+
+def ensure_topic_coverage(transcript: str, coverage_brief: str, legend: str) -> str:
+    revised_legend = _chat_completion_with_auto_continue(
+        action_name="revisao de cobertura",
+        timeout=140.0,
+        model=OPENAI_CAPTION_MODEL,
+        messages=[
+            {"role": "system", "content": COVERAGE_ENFORCEMENT_PROMPT},
+            {
+                "role": "user",
+                "content": (
+                    f"Checklist de cobertura:\n{coverage_brief}\n\n"
+                    f"Transcricao corrigida:\n\n{transcript}\n\n"
+                    f"Legenda atual:\n\n{legend}"
+                )
+            }
+        ],
+        temperature=0.1,
+        max_tokens=max(int(len(legend.split()) * 2.4), 420),
+        continue_instruction=(
+            "Continue exatamente do ponto em que parou. "
+            "Nao reinicie, nao repita e devolva somente o restante da mesma legenda em HTML."
+        ),
+        max_rounds=3,
+    )
+
+    if len(revised_legend.strip()) < int(len(legend.strip()) * 0.75):
+        logger.warning(
+            "Revisão de cobertura encolheu demais a legenda (%s -> %s chars). Mantendo legenda original.",
+            len(legend),
+            len(revised_legend),
+        )
+        return legend
+
+    return revised_legend
 
 
 def enforce_entity_fidelity(transcript: str, legend: str) -> str:
@@ -778,10 +875,16 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         await processing_msg.edit_text("🧠 Corrigindo nomes...")
         corrected_transcript = correct_player_names(transcript)
         logger.info(f"Transcrição corrigida ({len(corrected_transcript)} chars)")
+        await processing_msg.edit_text("🧭 Mapeando assuntos centrais...")
+        coverage_brief = extract_coverage_brief(corrected_transcript)
+        logger.info(f"Mapa de cobertura ({len(coverage_brief)} chars)")
 
         await processing_msg.edit_text("✍️ Gerando legenda...")
-        legend = generate_legend(corrected_transcript)
+        legend = generate_legend(corrected_transcript, coverage_brief)
         logger.info(f"Legenda gerada ({len(legend)} chars)")
+        await processing_msg.edit_text("🧩 Garantindo cobertura dos temas...")
+        legend = ensure_topic_coverage(corrected_transcript, coverage_brief, legend)
+        logger.info(f"Legenda com cobertura revisada ({len(legend)} chars)")
         await processing_msg.edit_text("🔎 Revisando nomes e fidelidade...")
         legend = enforce_entity_fidelity(corrected_transcript, legend)
         logger.info(f"Legenda revisada ({len(legend)} chars)")
