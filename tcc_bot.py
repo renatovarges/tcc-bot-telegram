@@ -12,6 +12,8 @@ import io
 import asyncio
 import threading
 import time
+import html
+import re
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import httpx
 from telegram import Update
@@ -35,6 +37,10 @@ OPENAI_CAPTION_MODEL = os.getenv('OPENAI_CAPTION_MODEL', LEGACY_OPENAI_TEXT_MODE
 
 class UserFacingError(Exception):
     """Erro com mensagem segura para exibir no Telegram."""
+
+
+ALLOWED_TELEGRAM_TAGS = {"b", "i"}
+ALLOWED_TELEGRAM_TAG_PATTERN = re.compile(r"</?(b|i)>", re.IGNORECASE)
 
 
 def _get_retry_delay(response: httpx.Response, attempt: int) -> float:
@@ -67,6 +73,43 @@ def _extract_openai_error(response: httpx.Response) -> tuple[str, str | None, st
 
 def _openai_headers() -> dict[str, str]:
     return {"Authorization": f"Bearer {OPENAI_API_KEY}"}
+
+
+def sanitize_telegram_html(text: str) -> str:
+    """Mantém apenas <b> e <i>, escapando o restante e balanceando as tags."""
+    if not text:
+        return text
+
+    parts = []
+    stack: list[str] = []
+    last_index = 0
+
+    for match in ALLOWED_TELEGRAM_TAG_PATTERN.finditer(text):
+        parts.append(html.escape(text[last_index:match.start()], quote=False))
+
+        tag = match.group(1).lower()
+        raw_tag = match.group(0)
+        is_closing_tag = raw_tag.startswith("</")
+
+        if is_closing_tag:
+            if tag in stack:
+                while stack:
+                    open_tag = stack.pop()
+                    parts.append(f"</{open_tag}>")
+                    if open_tag == tag:
+                        break
+        else:
+            parts.append(f"<{tag}>")
+            stack.append(tag)
+
+        last_index = match.end()
+
+    parts.append(html.escape(text[last_index:], quote=False))
+
+    while stack:
+        parts.append(f"</{stack.pop()}>")
+
+    return "".join(parts)
 
 
 def _post_openai(url: str, *, timeout: float, action_name: str, **kwargs) -> httpx.Response:
@@ -594,6 +637,8 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         await processing_msg.edit_text("🔎 Revisando nomes e fidelidade...")
         legend = enforce_entity_fidelity(corrected_transcript, legend)
         logger.info(f"Legenda revisada ({len(legend)} chars)")
+        legend = sanitize_telegram_html(legend)
+        logger.info(f"Legenda sanitizada para HTML Telegram ({len(legend)} chars)")
 
         await processing_msg.edit_text(legend, parse_mode='HTML')
         logger.info("✅ Legenda enviada com sucesso.")
