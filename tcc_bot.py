@@ -79,6 +79,14 @@ def _openai_headers() -> dict[str, str]:
     return {"Authorization": f"Bearer {OPENAI_API_KEY}"}
 
 
+def get_transcription_timeout(duration_seconds: int | None) -> float:
+    if not duration_seconds:
+        return 300.0
+
+    # Áudios longos podem levar vários minutos no endpoint de transcrição.
+    return float(min(max(180, duration_seconds // 2 + 180), 900))
+
+
 def sanitize_telegram_html(text: str) -> str:
     """Mantém apenas <b> e <i>, escapando o restante e balanceando as tags."""
     if not text:
@@ -684,11 +692,15 @@ Saida:
 
 # ── Funções de transcrição, correção de nomes e legendagem ───────────────────
 
-def transcribe_audio(audio_bytes: bytes, filename: str = "audio.ogg") -> str:
+def transcribe_audio(
+    audio_bytes: bytes,
+    filename: str = "audio.ogg",
+    duration_seconds: int | None = None,
+) -> str:
     audio_io = io.BytesIO(audio_bytes)
     response = _post_openai(
         "https://api.openai.com/v1/audio/transcriptions",
-        timeout=120.0,
+        timeout=get_transcription_timeout(duration_seconds),
         action_name="transcrição",
         files={"file": (filename, audio_io, "audio/ogg")},
         data={
@@ -859,34 +871,46 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         if update.message.voice:
             tg_file = await update.message.voice.get_file()
             filename = "voice.ogg"
+            duration_seconds = update.message.voice.duration
         elif update.message.audio:
             tg_file = await update.message.audio.get_file()
             filename = update.message.audio.file_name or "audio.ogg"
+            duration_seconds = update.message.audio.duration
         else:
             return
 
         audio_bytes = await tg_file.download_as_bytearray()
-        logger.info(f"Áudio recebido: {len(audio_bytes)} bytes")
+        logger.info(f"Áudio recebido: {len(audio_bytes)} bytes | duração={duration_seconds}s")
 
         await processing_msg.edit_text("🎙️ Transcrevendo com Whisper...")
-        transcript = transcribe_audio(bytes(audio_bytes), filename)
+        transcript = await asyncio.to_thread(
+            transcribe_audio,
+            bytes(audio_bytes),
+            filename,
+            duration_seconds,
+        )
         logger.info(f"Transcrição ({len(transcript)} chars)")
 
         await processing_msg.edit_text("🧠 Corrigindo nomes...")
-        corrected_transcript = correct_player_names(transcript)
+        corrected_transcript = await asyncio.to_thread(correct_player_names, transcript)
         logger.info(f"Transcrição corrigida ({len(corrected_transcript)} chars)")
         await processing_msg.edit_text("🧭 Mapeando assuntos centrais...")
-        coverage_brief = extract_coverage_brief(corrected_transcript)
+        coverage_brief = await asyncio.to_thread(extract_coverage_brief, corrected_transcript)
         logger.info(f"Mapa de cobertura ({len(coverage_brief)} chars)")
 
         await processing_msg.edit_text("✍️ Gerando legenda...")
-        legend = generate_legend(corrected_transcript, coverage_brief)
+        legend = await asyncio.to_thread(generate_legend, corrected_transcript, coverage_brief)
         logger.info(f"Legenda gerada ({len(legend)} chars)")
         await processing_msg.edit_text("🧩 Garantindo cobertura dos temas...")
-        legend = ensure_topic_coverage(corrected_transcript, coverage_brief, legend)
+        legend = await asyncio.to_thread(
+            ensure_topic_coverage,
+            corrected_transcript,
+            coverage_brief,
+            legend,
+        )
         logger.info(f"Legenda com cobertura revisada ({len(legend)} chars)")
         await processing_msg.edit_text("🔎 Revisando nomes e fidelidade...")
-        legend = enforce_entity_fidelity(corrected_transcript, legend)
+        legend = await asyncio.to_thread(enforce_entity_fidelity, corrected_transcript, legend)
         logger.info(f"Legenda revisada ({len(legend)} chars)")
         legend = strip_model_wrappers(legend)
         logger.info(f"Legenda sem wrappers de markdown ({len(legend)} chars)")
