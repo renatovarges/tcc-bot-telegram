@@ -112,6 +112,25 @@ def sanitize_telegram_html(text: str) -> str:
     return "".join(parts)
 
 
+def _extract_chat_completion_text(response: httpx.Response, action_name: str) -> tuple[str, str | None]:
+    payload = response.json()
+    choice = payload["choices"][0]
+    message = choice.get("message") or {}
+    content = (message.get("content") or "").strip()
+    finish_reason = choice.get("finish_reason")
+    usage = payload.get("usage") or {}
+
+    logger.info(
+        "%s concluído | finish_reason=%s prompt_tokens=%s completion_tokens=%s",
+        action_name,
+        finish_reason,
+        usage.get("prompt_tokens"),
+        usage.get("completion_tokens"),
+    )
+
+    return content, finish_reason
+
+
 def _post_openai(url: str, *, timeout: float, action_name: str, **kwargs) -> httpx.Response:
     max_attempts = 3
 
@@ -537,66 +556,101 @@ def correct_player_names(transcript: str) -> str:
             "max_tokens": 2500
         }
     )
-    return response.json()["choices"][0]["message"]["content"].strip()
+    content, _ = _extract_chat_completion_text(response, "correção de nomes")
+    return content
         
 def get_legend_max_tokens(transcript: str) -> int:
     word_count = len(transcript.split())
 
     if word_count <= 220:
-        return 260
+        return 360
     elif word_count <= 500:
-        return 340
+        return 520
     else:
-        return 420
+        return 700
 
 def generate_legend(transcript: str) -> str:
-    max_tokens = get_legend_max_tokens(transcript)
+    base_max_tokens = get_legend_max_tokens(transcript)
+    attempts = [base_max_tokens, base_max_tokens + 220]
+    last_legend = ""
 
-    response = _post_openai(
-        "https://api.openai.com/v1/chat/completions",
-        timeout=180.0,
-        action_name="geracao de legenda",
-        json={
-            "model": OPENAI_CAPTION_MODEL,
-            "messages": [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": (
-                        "Organize a legenda por blocos de assunto, sem seguir obrigatoriamente a ordem cronologica do audio.\n\n"
-                        f"Transcricao do audio:\n\n{transcript}"
-                    )
-                }
-            ],
-            "temperature": 0.3,
-            "max_tokens": max_tokens
-        }
-    )
-    return response.json()["choices"][0]["message"]["content"].strip()
+    for max_tokens in attempts:
+        response = _post_openai(
+            "https://api.openai.com/v1/chat/completions",
+            timeout=180.0,
+            action_name="geracao de legenda",
+            json={
+                "model": OPENAI_CAPTION_MODEL,
+                "messages": [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {
+                        "role": "user",
+                        "content": (
+                            "Organize a legenda por blocos de assunto, sem seguir obrigatoriamente a ordem cronologica do audio.\n\n"
+                            f"Transcricao do audio:\n\n{transcript}"
+                        )
+                    }
+                ],
+                "temperature": 0.3,
+                "max_tokens": max_tokens
+            }
+        )
+        last_legend, finish_reason = _extract_chat_completion_text(response, "geração de legenda")
+        if finish_reason != "length":
+            return last_legend
+
+        logger.warning(
+            "Legenda atingiu o limite de tokens com max_tokens=%s. Tentando novamente com limite maior.",
+            max_tokens,
+        )
+
+    return last_legend
 
 
 def enforce_entity_fidelity(transcript: str, legend: str) -> str:
-    response = _post_openai(
-        "https://api.openai.com/v1/chat/completions",
-        timeout=120.0,
-        action_name="revisao final de nomes",
-        json={
-            "model": OPENAI_NAMES_MODEL,
-            "messages": [
-                {"role": "system", "content": ENTITY_FIDELITY_PROMPT},
-                {
-                    "role": "user",
-                    "content": (
-                        f"Transcricao corrigida:\n\n{transcript}\n\n"
-                        f"Legenda gerada:\n\n{legend}"
-                    )
-                }
-            ],
-            "temperature": 0,
-            "max_tokens": max(len(legend.split()) + 120, 220)
-        }
-    )
-    return response.json()["choices"][0]["message"]["content"].strip()
+    base_max_tokens = max(int(len(legend.split()) * 2.6), 420)
+    attempts = [base_max_tokens, base_max_tokens + 220]
+    last_legend = legend
+
+    for max_tokens in attempts:
+        response = _post_openai(
+            "https://api.openai.com/v1/chat/completions",
+            timeout=120.0,
+            action_name="revisao final de nomes",
+            json={
+                "model": OPENAI_NAMES_MODEL,
+                "messages": [
+                    {"role": "system", "content": ENTITY_FIDELITY_PROMPT},
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Transcricao corrigida:\n\n{transcript}\n\n"
+                            f"Legenda gerada:\n\n{legend}"
+                        )
+                    }
+                ],
+                "temperature": 0,
+                "max_tokens": max_tokens
+            }
+        )
+        last_legend, finish_reason = _extract_chat_completion_text(response, "revisão final de nomes")
+        if finish_reason != "length":
+            break
+
+        logger.warning(
+            "Revisão final de nomes atingiu o limite de tokens com max_tokens=%s. Tentando novamente com limite maior.",
+            max_tokens,
+        )
+
+    if len(last_legend.strip()) < int(len(legend.strip()) * 0.7):
+        logger.warning(
+            "Revisão final encolheu demais a legenda (%s -> %s chars). Mantendo legenda original.",
+            len(legend),
+            len(last_legend),
+        )
+        return legend
+
+    return last_legend
 
 
 # ── Handlers do Telegram ──────────────────────────────────────────────────────
