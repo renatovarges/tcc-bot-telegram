@@ -14,6 +14,7 @@ import threading
 import time
 import html
 import re
+from dataclasses import dataclass
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import httpx
 from telegram import Update
@@ -41,10 +42,26 @@ class UserFacingError(Exception):
 
 ALLOWED_TELEGRAM_TAGS = {"b", "i"}
 ALLOWED_TELEGRAM_TAG_PATTERN = re.compile(r"</?(b|i)>", re.IGNORECASE)
-MAIN_TITLE_BOLD_PATTERN = re.compile(r"^(?P<prefix>.*?<b>)(?P<title>.*?)(?P<suffix></b>.*)$", re.IGNORECASE)
 CODE_FENCE_LINE_PATTERN = re.compile(r"^\s*```(?:html)?\s*$", re.IGNORECASE)
 LANGUAGE_HINT_LINE_PATTERN = re.compile(r"^\s*html\s*$", re.IGNORECASE)
 HTML_TAG_PATTERN = re.compile(r"<[^>]+>")
+TITLE_WITH_BOLD_PATTERN = re.compile(r"^(?P<before>.*?)(?:<b>(?P<title>.*?)</b>)(?P<after>.*)$", re.IGNORECASE)
+TITLE_EMOJI_PATTERN = re.compile(
+    r"(?:[\U0001F1E6-\U0001F1FF]{2}|[0-9#*]\ufe0f?\u20e3|"
+    r"[\U0001F300-\U0001FAFF\u2600-\u27BF]\ufe0f?)"
+)
+TITLE_EDGE_CLEANUP_PATTERN = re.compile(r"^[\s\-:;|\u2022\u2013\u2014]+|[\s\-:;|\u2022\u2013\u2014]+$")
+DEFAULT_TITLE_EMOJI = "\U0001F4CC"
+
+
+@dataclass(frozen=True)
+class LegendProfile:
+    min_plain_chars: int
+    max_plain_chars: int
+    max_lines: int
+    max_bullets: int
+    generation_tokens: int
+    compaction_tokens: int
 
 
 def _get_retry_delay(response: httpx.Response, attempt: int) -> float:
@@ -85,6 +102,64 @@ def get_transcription_timeout(duration_seconds: int | None) -> float:
 
     # Áudios longos podem levar vários minutos no endpoint de transcrição.
     return float(min(max(180, duration_seconds // 2 + 180), 900))
+
+
+def get_legend_profile(transcript: str) -> LegendProfile:
+    word_count = len((transcript or "").split())
+
+    if word_count <= 140:
+        return LegendProfile(
+            min_plain_chars=260,
+            max_plain_chars=760,
+            max_lines=9,
+            max_bullets=4,
+            generation_tokens=420,
+            compaction_tokens=320,
+        )
+
+    if word_count <= 350:
+        return LegendProfile(
+            min_plain_chars=380,
+            max_plain_chars=1000,
+            max_lines=11,
+            max_bullets=5,
+            generation_tokens=560,
+            compaction_tokens=420,
+        )
+
+    if word_count <= 750:
+        return LegendProfile(
+            min_plain_chars=520,
+            max_plain_chars=1250,
+            max_lines=14,
+            max_bullets=6,
+            generation_tokens=760,
+            compaction_tokens=560,
+        )
+
+    return LegendProfile(
+        min_plain_chars=650,
+        max_plain_chars=1450,
+        max_lines=16,
+        max_bullets=7,
+        generation_tokens=960,
+        compaction_tokens=720,
+    )
+
+
+def get_legend_budget_instruction(transcript: str) -> str:
+    profile = get_legend_profile(transcript)
+    return (
+        "Orcamento da legenda: "
+        f"{profile.min_plain_chars} a {profile.max_plain_chars} caracteres visiveis, "
+        f"ate {profile.max_bullets} bullets e ate {profile.max_lines} linhas com texto. "
+        "Use menos que isso se a fala for simples; use o limite superior so quando houver ideias centrais distintas."
+    )
+
+
+def get_name_correction_max_tokens(transcript: str) -> int:
+    word_count = len((transcript or "").split())
+    return min(max(int(word_count * 2.0) + 500, 1200), 4000)
 
 
 def sanitize_telegram_html(text: str) -> str:
@@ -148,11 +223,69 @@ def strip_model_wrappers(text: str) -> str:
     return cleaned.strip()
 
 
+def _first_title_emoji(*parts: str) -> str:
+    for part in parts:
+        match = TITLE_EMOJI_PATTERN.search(part or "")
+        if match:
+            return match.group(0)
+    return DEFAULT_TITLE_EMOJI
+
+
+def _cleanup_title_text(text: str) -> str:
+    text = html.unescape(_strip_html_tags(text or ""))
+    text = TITLE_EMOJI_PATTERN.sub("", text)
+    text = re.sub(r"\s+", " ", text)
+    text = TITLE_EDGE_CLEANUP_PATTERN.sub("", text.strip())
+    return text.strip()
+
+
+def _looks_like_heading(text: str) -> bool:
+    if not text or len(text) > 90:
+        return False
+
+    letters = [char for char in text if char.isalpha()]
+    if not letters:
+        return False
+
+    uppercase_ratio = sum(1 for char in letters if char.isupper()) / len(letters)
+    return uppercase_ratio >= 0.65
+
+
+def _normalize_heading_line(line: str, *, force: bool = False) -> str | None:
+    stripped_line = line.strip()
+    match = TITLE_WITH_BOLD_PATTERN.match(stripped_line)
+
+    if match:
+        before = match.group("before")
+        title = match.group("title")
+        after = match.group("after")
+        outside_text = _cleanup_title_text(f"{before} {after}")
+        title_text = _cleanup_title_text(title)
+
+        if not force and outside_text:
+            return None
+        if not force and not TITLE_EMOJI_PATTERN.search(stripped_line) and not _looks_like_heading(title_text):
+            return None
+
+        emoji = _first_title_emoji(before, title, after)
+        safe_title = html.escape((title_text or outside_text or "ANALISE").upper(), quote=False)
+        return f"{emoji} <b>{safe_title}</b>"
+
+    title_text = _cleanup_title_text(stripped_line)
+    if not force and not _looks_like_heading(title_text):
+        return None
+
+    emoji = _first_title_emoji(stripped_line)
+    safe_title = html.escape((title_text or "ANALISE").upper(), quote=False)
+    return f"{emoji} <b>{safe_title}</b>"
+
+
 def force_main_title_uppercase(text: str) -> str:
     if not text:
         return text
 
     lines = text.splitlines()
+    normalized_first_heading = False
 
     for index, line in enumerate(lines):
         stripped_line = line.strip()
@@ -161,16 +294,10 @@ def force_main_title_uppercase(text: str) -> str:
         if CODE_FENCE_LINE_PATTERN.match(stripped_line) or LANGUAGE_HINT_LINE_PATTERN.match(stripped_line):
             continue
 
-        match = MAIN_TITLE_BOLD_PATTERN.match(line)
-        if match:
-            lines[index] = (
-                f"{match.group('prefix')}"
-                f"{match.group('title').upper()}"
-                f"{match.group('suffix')}"
-            )
-        else:
-            lines[index] = f"<b>{line.strip().upper()}</b>"
-        break
+        normalized = _normalize_heading_line(line, force=not normalized_first_heading)
+        if normalized:
+            lines[index] = normalized
+            normalized_first_heading = True
 
     return "\n".join(lines)
 
@@ -179,12 +306,17 @@ def _strip_html_tags(text: str) -> str:
     return HTML_TAG_PATTERN.sub("", text or "")
 
 
-def legend_needs_compaction(legend: str) -> bool:
+def legend_needs_compaction(legend: str, transcript: str = "") -> bool:
+    profile = get_legend_profile(transcript)
     plain_text = _strip_html_tags(legend)
     non_empty_lines = [line.strip() for line in plain_text.splitlines() if line.strip()]
     bullet_count = sum(1 for line in non_empty_lines if line.startswith("-"))
 
-    return len(plain_text) > 1050 or len(non_empty_lines) > 14 or bullet_count > 6
+    return (
+        len(plain_text) > profile.max_plain_chars
+        or len(non_empty_lines) > profile.max_lines
+        or bullet_count > profile.max_bullets
+    )
 
 
 def _extract_chat_completion_text(response: httpx.Response, action_name: str) -> tuple[str, str | None]:
@@ -222,7 +354,8 @@ def _merge_with_overlap(base: str, addition: str) -> str:
     if addition and addition in base[-400:]:
         return base
 
-    return base + addition
+    separator = " " if base[-1].isalnum() and addition[0].isalnum() else ""
+    return base + separator + addition
 
 
 def _chat_completion_with_auto_continue(
@@ -606,11 +739,13 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 <formato>
 - Responda apenas com HTML valido para Telegram.
 - Abra com um titulo obvio em CAIXA ALTA: emoji + <b>TITULO</b>.
+- O emoji do titulo deve vir antes do <b>, nunca depois do texto.
 - O titulo deve refletir de forma direta o tema que o locutor introduziu. Nao invente titulo criativo.
-- Organize a legenda em 3 blocos por padrao. Use 4 apenas se cortar uma ideia central.
+- Siga o orcamento informado junto da transcricao. Ele e limite, nao meta para preencher.
+- Organize a legenda em 2 ou 3 blocos por padrao. Use 4 apenas se o audio trouxer ideias centrais realmente distintas.
 - Use subtitulos funcionais em CAIXA ALTA quando ajudarem a entender os blocos, mas evite cara de slide, apostila ou relatorio.
-- Mantenha 1 emoji no titulo e, quando houver subtitulo, 1 emoji por bloco para guiar a leitura.
-- Prefira 4 ou 5 bullets no total. Use 6 apenas se for realmente indispensavel.
+- Mantenha 1 emoji no titulo e, quando houver subtitulo, 1 emoji por bloco para guiar a leitura. Em ambos, o emoji vem antes do <b>.
+- Prefira 3 a 5 bullets no total. Em audio longo, pode chegar ao limite informado se isso evitar amputar ideias.
 - Cada bullet precisa ter verbo e contexto minimo para fazer sentido sozinho.
 - Cada bullet deve caber em uma frase principal. So use uma segunda oracao curta se sem ela a ideia ficar manca.
 - A pontuacao deve ser natural e ajudar o texto a respirar.
@@ -622,7 +757,7 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - Nunca use Markdown com asteriscos ou underscores.
 - Nao termine com frase automatica de encerramento.
 - A legenda inteira deve parecer limpa em um print do Telegram, nao um artigo espremido.
-- Se estiver ficando grande demais, comprima mais em vez de abrir novos detalhes.
+- Se estiver ficando grande demais, compacte listas e detalhes repetidos, mas preserve a conclusao e a ressalva que mudam a decisao.
 </formato>
 
 <estilo>
@@ -684,8 +819,10 @@ Regras:
 - Preserve o titulo principal, o tom humano e a organizacao por blocos.
 - Preserve nomes de jogadores, tecnicos e times exatamente como aparecem.
 - Preserve ou recoloque 1 emoji no titulo e 1 emoji por bloco quando isso ajudar a leitura.
-- Mantenha 3 blocos por padrao. Use 4 apenas se for indispensavel para nao cortar uma ideia central.
-- Mire em 4 ou 5 bullets no total.
+- O emoji de titulo e subtitulo deve vir antes do <b>, nunca depois do texto.
+- Siga o orcamento informado pelo usuario. Fique abaixo do limite superior, mas nao esprema a ponto de perder ideias centrais.
+- Mantenha 2 ou 3 blocos por padrao. Use 4 apenas se for indispensavel para nao cortar uma ideia central.
+- Mire em 3 a 5 bullets no total. Em audio longo, use ate o limite informado se necessario.
 - Cada bullet deve ter uma frase principal. So use uma segunda oracao curta se ela for indispensavel.
 - Mantenha a pontuacao natural, com leitura fluida.
 - Corte exemplos redundantes, listas extensas, explicacoes que repetem a mesma ideia e excesso de numeros.
@@ -720,33 +857,27 @@ def transcribe_audio(
 
 
 def correct_player_names(transcript: str) -> str:
-    response = _post_openai(
-        "https://api.openai.com/v1/chat/completions",
+    return _chat_completion_with_auto_continue(
+        action_name="correcao de nomes",
         timeout=180.0,
-        action_name="correção de nomes",
-        json={
-            "model": OPENAI_NAMES_MODEL,
-            "messages": [
-                {"role": "system", "content": NAMES_CORRECTION_PROMPT},
-                {"role": "user", "content": transcript}
-            ],
-            "temperature": 0,
-            "max_tokens": 2500
-        }
+        model=OPENAI_NAMES_MODEL,
+        messages=[
+            {"role": "system", "content": NAMES_CORRECTION_PROMPT},
+            {"role": "user", "content": transcript}
+        ],
+        temperature=0,
+        max_tokens=get_name_correction_max_tokens(transcript),
+        continue_instruction=(
+            "Continue exatamente da proxima palavra da mesma transcricao corrigida. "
+            "Nao reinicie, nao resuma, nao acrescente comentarios."
+        ),
+        max_rounds=4,
     )
-    content, _ = _extract_chat_completion_text(response, "correção de nomes")
-    return content
 
 
 def get_legend_max_tokens(transcript: str) -> int:
-    word_count = len(transcript.split())
+    return get_legend_profile(transcript).generation_tokens
 
-    if word_count <= 220:
-        return 320
-    elif word_count <= 500:
-        return 420
-    else:
-        return 560
 
 def generate_legend(transcript: str) -> str:
     return _chat_completion_with_auto_continue(
@@ -759,7 +890,8 @@ def generate_legend(transcript: str) -> str:
                 "role": "user",
                 "content": (
                     "Organize a legenda por blocos de assunto, sem seguir obrigatoriamente a ordem cronologica do audio. "
-                    "Priorize limpeza visual e economia de texto: so mantenha o que realmente carrega a ideia.\n\n"
+                    "Priorize limpeza visual e economia de texto, mas nao corte conclusoes ou ressalvas que mudam a ideia.\n\n"
+                    f"{get_legend_budget_instruction(transcript)}\n\n"
                     f"Transcricao do audio:\n\n{transcript}"
                 )
             }
@@ -774,7 +906,9 @@ def generate_legend(transcript: str) -> str:
 
 
 def compact_legend_if_needed(transcript: str, legend: str) -> str:
-    if not legend_needs_compaction(legend):
+    profile = get_legend_profile(transcript)
+
+    if not legend_needs_compaction(legend, transcript):
         return legend
 
     logger.info("Legenda acima do tamanho alvo. Rodando compactacao (%s chars).", len(legend))
@@ -788,13 +922,14 @@ def compact_legend_if_needed(transcript: str, legend: str) -> str:
             {
                 "role": "user",
                 "content": (
+                    f"{get_legend_budget_instruction(transcript)}\n\n"
                     f"Transcricao corrigida:\n\n{transcript}\n\n"
                     f"Legenda atual:\n\n{legend}"
                 )
             }
         ],
         temperature=0.3,
-        max_tokens=max(min(int(len(legend.split()) * 1.1), 420), 260),
+        max_tokens=profile.compaction_tokens,
         continue_instruction=(
             "Continue exatamente do ponto em que parou. "
             "Nao reinicie, nao repita e devolva somente o restante da mesma legenda em HTML."
@@ -802,20 +937,26 @@ def compact_legend_if_needed(transcript: str, legend: str) -> str:
         max_rounds=2,
     )
     compacted = strip_model_wrappers(compacted)
+    original_plain = _strip_html_tags(legend).strip()
+    compacted_plain = _strip_html_tags(compacted).strip()
 
-    if len(compacted.strip()) < int(len(legend.strip()) * 0.55):
+    if not compacted_plain:
+        logger.warning("Compactacao retornou vazia. Mantendo legenda original.")
+        return legend
+
+    if len(compacted_plain) < profile.min_plain_chars and len(original_plain) > profile.min_plain_chars:
         logger.warning(
             "Compactacao encolheu demais a legenda (%s -> %s chars). Mantendo legenda original.",
-            len(legend),
-            len(compacted),
+            len(original_plain),
+            len(compacted_plain),
         )
         return legend
 
-    if len(_strip_html_tags(compacted)) >= len(_strip_html_tags(legend)):
+    if len(compacted_plain) >= int(len(original_plain) * 0.97):
         logger.info("Compactacao nao reduziu a legenda de forma util. Mantendo original.")
         return legend
 
-    logger.info("Legenda compactada (%s -> %s chars).", len(legend), len(compacted))
+    logger.info("Legenda compactada (%s -> %s chars).", len(original_plain), len(compacted_plain))
     return compacted
 
 
