@@ -50,8 +50,14 @@ TITLE_EMOJI_PATTERN = re.compile(
     r"(?:[\U0001F1E6-\U0001F1FF]{2}|[0-9#*]\ufe0f?\u20e3|"
     r"[\U0001F300-\U0001FAFF\u2600-\u27BF]\ufe0f?)"
 )
+BULLET_LEADING_EMOJI_PATTERN = re.compile(
+    r"(?m)^(?P<prefix>\s*-\s*)"
+    r"(?:(?:[\U0001F1E6-\U0001F1FF]{2}|[0-9#*]\ufe0f?\u20e3|"
+    r"[\U0001F300-\U0001FAFF\u2600-\u27BF]\ufe0f?)\s*)+"
+)
 TITLE_EDGE_CLEANUP_PATTERN = re.compile(r"^[\s\-:;|\u2022\u2013\u2014]+|[\s\-:;|\u2022\u2013\u2014]+$")
 DEFAULT_TITLE_EMOJI = "\U0001F4CC"
+MAX_HEADING_EMOJIS = 3
 
 
 @dataclass(frozen=True)
@@ -286,6 +292,7 @@ def force_main_title_uppercase(text: str) -> str:
 
     lines = text.splitlines()
     normalized_first_heading = False
+    heading_emoji_count = 0
 
     for index, line in enumerate(lines):
         stripped_line = line.strip()
@@ -296,10 +303,20 @@ def force_main_title_uppercase(text: str) -> str:
 
         normalized = _normalize_heading_line(line, force=not normalized_first_heading)
         if normalized:
+            heading_emoji_count += 1
+            if heading_emoji_count > MAX_HEADING_EMOJIS:
+                normalized = TITLE_EMOJI_PATTERN.sub("", normalized, count=1).lstrip()
             lines[index] = normalized
             normalized_first_heading = True
 
     return "\n".join(lines)
+
+
+def reduce_excess_line_emojis(text: str) -> str:
+    if not text:
+        return text
+
+    return BULLET_LEADING_EMOJI_PATTERN.sub(r"\g<prefix>", text)
 
 
 def _strip_html_tags(text: str) -> str:
@@ -744,7 +761,8 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - Siga o orcamento informado junto da transcricao. Ele e limite, nao meta para preencher.
 - Organize a legenda em 2 ou 3 blocos por padrao. Use 4 apenas se o audio trouxer ideias centrais realmente distintas.
 - Use subtitulos funcionais em CAIXA ALTA quando ajudarem a entender os blocos, mas evite cara de slide, apostila ou relatorio.
-- Mantenha 1 emoji no titulo e, quando houver subtitulo, 1 emoji por bloco para guiar a leitura. Em ambos, o emoji vem antes do <b>.
+- Use emojis com parcimonia: 1 no titulo e no maximo 1 ou 2 em subtitulos realmente importantes. Em ambos, o emoji vem antes do <b>.
+- Nunca comece bullets com emoji. Bullet usa apenas "-"; o destaque visual fica no <b>, <i> e na frase.
 - Prefira 3 a 5 bullets no total. Em audio longo, pode chegar ao limite informado se isso evitar amputar ideias.
 - Cada bullet precisa ter verbo e contexto minimo para fazer sentido sozinho.
 - Cada bullet deve caber em uma frase principal. So use uma segunda oracao curta se sem ela a ideia ficar manca.
@@ -753,7 +771,7 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - Cada bloco deve ser enxuto: 1 ou 2 bullets fortes, sem texto amontoado.
 - Use <b> para nomes, times e pontos-chave.
 - Use <i> para ressalvas, nuances e alertas.
-- Use emojis com variedade e criterio, inclusive nos subtitulos, sem repetir sempre os mesmos.
+- Use poucos emojis, com criterio. A legenda nao deve parecer uma lista de icones.
 - Nunca use Markdown com asteriscos ou underscores.
 - Nao termine com frase automatica de encerramento.
 - A legenda inteira deve parecer limpa em um print do Telegram, nao um artigo espremido.
@@ -788,7 +806,7 @@ Antes de responder, verifique em silencio:
 3. Os bullets fazem sentido sozinhos.
 4. O titulo esta obvio e fiel ao que o locutor introduziu.
 5. Os subtitulos ajudam a leitura.
-6. Os emojis combinam com o assunto e nao estao repetitivos.
+6. Os emojis sao poucos, combinam com o assunto e nao aparecem no inicio dos bullets.
 </checklist_interno>
 """
 
@@ -818,8 +836,9 @@ Sua tarefa e encurtar a legenda quando ela estiver grande demais, sem deixar o t
 Regras:
 - Preserve o titulo principal, o tom humano e a organizacao por blocos.
 - Preserve nomes de jogadores, tecnicos e times exatamente como aparecem.
-- Preserve ou recoloque 1 emoji no titulo e 1 emoji por bloco quando isso ajudar a leitura.
+- Preserve ou recoloque 1 emoji no titulo e no maximo 1 ou 2 emojis em subtitulos quando isso ajudar a leitura.
 - O emoji de titulo e subtitulo deve vir antes do <b>, nunca depois do texto.
+- Nunca comece bullets com emoji. Bullet usa apenas "-".
 - Siga o orcamento informado pelo usuario. Fique abaixo do limite superior, mas nao esprema a ponto de perder ideias centrais.
 - Mantenha 2 ou 3 blocos por padrao. Use 4 apenas se for indispensavel para nao cortar uma ideia central.
 - Mire em 3 a 5 bullets no total. Em audio longo, use ate o limite informado se necessario.
@@ -1047,6 +1066,7 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         logger.info(f"Legenda sem wrappers de markdown ({len(legend)} chars)")
         legend = sanitize_telegram_html(legend)
         legend = force_main_title_uppercase(legend)
+        legend = reduce_excess_line_emojis(legend)
         logger.info(f"Legenda sanitizada para HTML Telegram ({len(legend)} chars)")
 
         await processing_msg.edit_text(legend, parse_mode='HTML')
