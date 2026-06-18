@@ -14,11 +14,15 @@ import threading
 import time
 import html
 import re
+import mimetypes
 from dataclasses import dataclass
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import httpx
+from dotenv import load_dotenv
 from telegram import Update
 from telegram.ext import Application, MessageHandler, CommandHandler, filters, ContextTypes
+
+load_dotenv()
 
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -34,6 +38,29 @@ LEGACY_OPENAI_TEXT_MODEL = os.getenv('OPENAI_TEXT_MODEL')
 OPENAI_TRANSCRIPTION_MODEL = os.getenv('OPENAI_TRANSCRIPTION_MODEL', 'gpt-4o-mini-transcribe')
 OPENAI_NAMES_MODEL = os.getenv('OPENAI_NAMES_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-4.1-mini')
 OPENAI_CAPTION_MODEL = os.getenv('OPENAI_CAPTION_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-4.1')
+OPENAI_AUDIO_SIZE_LIMIT_BYTES = 25 * 1024 * 1024
+SUPPORTED_TRANSCRIPTION_EXTENSIONS = {
+    ".flac",
+    ".m4a",
+    ".mp3",
+    ".mp4",
+    ".mpeg",
+    ".mpga",
+    ".ogg",
+    ".wav",
+    ".webm",
+}
+AUDIO_MIME_BY_EXTENSION = {
+    ".flac": "audio/flac",
+    ".m4a": "audio/mp4",
+    ".mp3": "audio/mpeg",
+    ".mp4": "audio/mp4",
+    ".mpeg": "audio/mpeg",
+    ".mpga": "audio/mpeg",
+    ".ogg": "audio/ogg",
+    ".wav": "audio/wav",
+    ".webm": "audio/webm",
+}
 
 
 class UserFacingError(Exception):
@@ -100,6 +127,56 @@ def _extract_openai_error(response: httpx.Response) -> tuple[str, str | None, st
 
 def _openai_headers() -> dict[str, str]:
     return {"Authorization": f"Bearer {OPENAI_API_KEY}"}
+
+
+def _safe_audio_filename(filename: str | None, mime_type: str | None, default: str) -> str:
+    filename = os.path.basename(filename or "").strip()
+
+    if not filename:
+        guessed_extension = mimetypes.guess_extension(mime_type or "") or os.path.splitext(default)[1]
+        filename = f"audio{guessed_extension}"
+
+    stem, extension = os.path.splitext(filename)
+    extension = extension.lower()
+
+    if extension == ".oga":
+        extension = ".ogg"
+    elif not extension:
+        guessed_extension = mimetypes.guess_extension(mime_type or "") or os.path.splitext(default)[1]
+        extension = ".ogg" if guessed_extension == ".oga" else guessed_extension.lower()
+
+    if extension not in SUPPORTED_TRANSCRIPTION_EXTENSIONS:
+        supported = ", ".join(sorted(ext.lstrip(".") for ext in SUPPORTED_TRANSCRIPTION_EXTENSIONS))
+        raise UserFacingError(
+            "❌ Formato de áudio não suportado pela transcrição. "
+            f"Recebi `{extension or 'sem extensão'}`; envie em um destes formatos: {supported}."
+        )
+
+    safe_stem = stem or "audio"
+    return f"{safe_stem}{extension}"
+
+
+def _audio_mime_type(filename: str, telegram_mime_type: str | None = None) -> str:
+    extension = os.path.splitext(filename)[1].lower()
+
+    if telegram_mime_type and telegram_mime_type.startswith("audio/"):
+        if telegram_mime_type in {"audio/oga", "audio/x-ogg"}:
+            return "audio/ogg"
+        return telegram_mime_type
+
+    return AUDIO_MIME_BY_EXTENSION.get(extension) or mimetypes.guess_type(filename)[0] or "application/octet-stream"
+
+
+def _ensure_audio_size_is_supported(size_bytes: int | None) -> None:
+    if not size_bytes:
+        return
+
+    if size_bytes > OPENAI_AUDIO_SIZE_LIMIT_BYTES:
+        size_mb = size_bytes / (1024 * 1024)
+        raise UserFacingError(
+            "❌ Esse áudio passou do limite de 25 MB da OpenAI "
+            f"({size_mb:.1f} MB). Envie um áudio menor, comprimido ou dividido em partes."
+        )
 
 
 def get_transcription_timeout(duration_seconds: int | None) -> float:
@@ -427,15 +504,38 @@ def _post_openai(url: str, *, timeout: float, action_name: str, **kwargs) -> htt
 
     with httpx.Client(timeout=timeout) as client:
         for attempt in range(1, max_attempts + 1):
-            response = client.post(url, headers=_openai_headers(), **kwargs)
+            try:
+                response = client.post(url, headers=_openai_headers(), **kwargs)
+            except httpx.RequestError as exc:
+                if attempt < max_attempts:
+                    delay = min(2 ** (attempt - 1), 8)
+                    logger.warning(
+                        "%s falhou por erro de rede/timeout (%s/%s). Nova tentativa em %.1fs. error=%s",
+                        action_name,
+                        attempt,
+                        max_attempts,
+                        delay,
+                        exc,
+                    )
+                    time.sleep(delay)
+                    continue
+
+                logger.error("%s falhou por erro de rede/timeout: %s", action_name, exc)
+                raise UserFacingError(
+                    "❌ Não consegui conectar à OpenAI agora. "
+                    "Tente novamente em instantes."
+                )
 
             if response.status_code < 400:
                 return response
 
             message, error_type, error_code = _extract_openai_error(response)
+            lower_message = (message or "").lower()
 
             if response.status_code == 429:
-                if error_code == "insufficient_quota":
+                if error_code == "insufficient_quota" or any(
+                    term in lower_message for term in ("quota", "billing", "credit", "crédito", "saldo")
+                ):
                     raise UserFacingError(
                         "❌ A conta da OpenAI está sem créditos ou sem billing ativo. "
                         "Confira saldo e faturamento no projeto da chave API."
@@ -461,6 +561,28 @@ def _post_openai(url: str, *, timeout: float, action_name: str, **kwargs) -> htt
                     "Tente novamente em alguns segundos."
                 )
 
+            if response.status_code in {408, 409} or response.status_code >= 500:
+                if attempt < max_attempts:
+                    delay = _get_retry_delay(response, attempt)
+                    logger.warning(
+                        "%s recebeu erro temporário %s (%s/%s). Nova tentativa em %.1fs. type=%s code=%s message=%s",
+                        action_name,
+                        response.status_code,
+                        attempt,
+                        max_attempts,
+                        delay,
+                        error_type,
+                        error_code,
+                        message,
+                    )
+                    time.sleep(delay)
+                    continue
+
+                raise UserFacingError(
+                    "❌ A OpenAI falhou temporariamente durante o processamento. "
+                    "Tente reenviar o áudio em instantes."
+                )
+
             if response.status_code == 401:
                 raise UserFacingError(
                     "❌ A chave da OpenAI foi rejeitada. Verifique a variável OPENAI_API_KEY."
@@ -470,6 +592,25 @@ def _post_openai(url: str, *, timeout: float, action_name: str, **kwargs) -> htt
                 raise UserFacingError(
                     "❌ O projeto da OpenAI não tem permissão para esse modelo ou endpoint."
                 )
+
+            if response.status_code == 413:
+                raise UserFacingError(
+                    "❌ O áudio passou do limite de tamanho aceito pela OpenAI. "
+                    "Envie um áudio menor, comprimido ou dividido em partes."
+                )
+
+            if response.status_code in {400, 404, 422}:
+                if any(term in lower_message for term in ("audio", "file", "format", "formato")):
+                    raise UserFacingError(
+                        "❌ A OpenAI rejeitou o arquivo de áudio. "
+                        "Tente reenviar como áudio do Telegram ou em MP3, M4A, WAV, OGG ou WEBM."
+                    )
+
+                if any(term in lower_message for term in ("model", "modelo")):
+                    raise UserFacingError(
+                        "❌ A OpenAI rejeitou o modelo configurado. "
+                        "Verifique OPENAI_TRANSCRIPTION_MODEL, OPENAI_NAMES_MODEL e OPENAI_CAPTION_MODEL."
+                    )
 
             try:
                 response.raise_for_status()
@@ -859,13 +1000,26 @@ def transcribe_audio(
     audio_bytes: bytes,
     filename: str = "audio.ogg",
     duration_seconds: int | None = None,
+    mime_type: str | None = None,
 ) -> str:
+    filename = _safe_audio_filename(filename, mime_type, "audio.ogg")
+    mime_type = _audio_mime_type(filename, mime_type)
+    timeout = get_transcription_timeout(duration_seconds)
+    logger.info(
+        "Chamando transcrição OpenAI | model=%s filename=%s mime=%s bytes=%s timeout=%ss",
+        OPENAI_TRANSCRIPTION_MODEL,
+        filename,
+        mime_type,
+        len(audio_bytes),
+        timeout,
+    )
+
     audio_io = io.BytesIO(audio_bytes)
     response = _post_openai(
         "https://api.openai.com/v1/audio/transcriptions",
-        timeout=get_transcription_timeout(duration_seconds),
+        timeout=timeout,
         action_name="transcrição",
-        files={"file": (filename, audio_io, "audio/ogg")},
+        files={"file": (filename, audio_io, mime_type)},
         data={
             "model": OPENAI_TRANSCRIPTION_MODEL,
             "language": "pt",
@@ -1026,18 +1180,43 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         processing_msg = await update.message.reply_text("⏳ Processando áudio...")
 
         if update.message.voice:
-            tg_file = await update.message.voice.get_file()
-            filename = "voice.ogg"
-            duration_seconds = update.message.voice.duration
+            audio_source = update.message.voice
+            tg_file = await audio_source.get_file()
+            filename = _safe_audio_filename(None, audio_source.mime_type, "voice.ogg")
+            mime_type = _audio_mime_type(filename, audio_source.mime_type)
+            duration_seconds = audio_source.duration
+            declared_file_size = audio_source.file_size
+            source_kind = "voice"
         elif update.message.audio:
-            tg_file = await update.message.audio.get_file()
-            filename = update.message.audio.file_name or "audio.ogg"
-            duration_seconds = update.message.audio.duration
+            audio_source = update.message.audio
+            tg_file = await audio_source.get_file()
+            filename = _safe_audio_filename(audio_source.file_name, audio_source.mime_type, "audio.ogg")
+            mime_type = _audio_mime_type(filename, audio_source.mime_type)
+            duration_seconds = audio_source.duration
+            declared_file_size = audio_source.file_size
+            source_kind = "audio"
         else:
             return
 
+        logger.info(
+            "Metadados do áudio Telegram | tipo=%s filename=%s mime=%s tamanho_declarado=%s duração=%ss",
+            source_kind,
+            filename,
+            mime_type,
+            declared_file_size,
+            duration_seconds,
+        )
+        _ensure_audio_size_is_supported(declared_file_size)
+
         audio_bytes = await tg_file.download_as_bytearray()
-        logger.info(f"Áudio recebido: {len(audio_bytes)} bytes | duração={duration_seconds}s")
+        _ensure_audio_size_is_supported(len(audio_bytes))
+        logger.info(
+            "Áudio recebido: %s bytes | filename=%s | mime=%s | duração=%ss",
+            len(audio_bytes),
+            filename,
+            mime_type,
+            duration_seconds,
+        )
 
         await processing_msg.edit_text("🎙️ Transcrevendo com Whisper...")
         transcript = await asyncio.to_thread(
@@ -1045,6 +1224,7 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
             bytes(audio_bytes),
             filename,
             duration_seconds,
+            mime_type,
         )
         logger.info(f"Transcrição ({len(transcript)} chars)")
 
