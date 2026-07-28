@@ -20,6 +20,7 @@ from http.server import HTTPServer, BaseHTTPRequestHandler
 import httpx
 from dotenv import load_dotenv
 from telegram import Update
+from telegram.error import TimedOut
 from telegram.ext import Application, MessageHandler, CommandHandler, filters, ContextTypes
 
 load_dotenv()
@@ -1169,6 +1170,24 @@ def enforce_entity_fidelity(transcript: str, legend: str) -> str:
 
 # ── Handlers do Telegram ──────────────────────────────────────────────────────
 
+async def _telegram_call_with_retry(coro_factory, *, action_name: str, attempts: int = 3):
+    for attempt in range(1, attempts + 1):
+        try:
+            return await coro_factory()
+        except TimedOut:
+            if attempt >= attempts:
+                raise
+            delay = min(2 ** (attempt - 1), 8)
+            logger.warning(
+                "%s expirou no Telegram (tentativa %s/%s). Nova tentativa em %.1fs.",
+                action_name,
+                attempt,
+                attempts,
+                delay,
+            )
+            await asyncio.sleep(delay)
+
+
 async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     logger.info(f"Mensagem recebida de user_id={user_id}")
@@ -1181,7 +1200,9 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
 
         if update.message.voice:
             audio_source = update.message.voice
-            tg_file = await audio_source.get_file()
+            tg_file = await _telegram_call_with_retry(
+                audio_source.get_file, action_name="Obter arquivo (voice)"
+            )
             filename = _safe_audio_filename(None, audio_source.mime_type, "voice.ogg")
             mime_type = _audio_mime_type(filename, audio_source.mime_type)
             duration_seconds = audio_source.duration
@@ -1189,7 +1210,9 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
             source_kind = "voice"
         elif update.message.audio:
             audio_source = update.message.audio
-            tg_file = await audio_source.get_file()
+            tg_file = await _telegram_call_with_retry(
+                audio_source.get_file, action_name="Obter arquivo (audio)"
+            )
             filename = _safe_audio_filename(audio_source.file_name, audio_source.mime_type, "audio.ogg")
             mime_type = _audio_mime_type(filename, audio_source.mime_type)
             duration_seconds = audio_source.duration
@@ -1208,7 +1231,9 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         )
         _ensure_audio_size_is_supported(declared_file_size)
 
-        audio_bytes = await tg_file.download_as_bytearray()
+        audio_bytes = await _telegram_call_with_retry(
+            tg_file.download_as_bytearray, action_name="Download do áudio"
+        )
         _ensure_audio_size_is_supported(len(audio_bytes))
         logger.info(
             "Áudio recebido: %s bytes | filename=%s | mime=%s | duração=%ss",
@@ -1260,6 +1285,12 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         await update.message.reply_text(
             f"❌ Erro na API OpenAI (código {e.response.status_code})."
         )
+    except TimedOut as e:
+        logger.error(f"Timeout de rede com o Telegram: {e}")
+        await update.message.reply_text(
+            "❌ A conexão com o Telegram expirou mesmo após novas tentativas. "
+            "Tente reenviar o áudio em instantes."
+        )
     except Exception as e:
         logger.error(f"Erro inesperado: {str(e)}", exc_info=True)
         await update.message.reply_text(f"❌ Erro: {str(e)}")
@@ -1287,7 +1318,15 @@ async def run_bot():
 
     logger.info(f"Iniciando bot | ALLOWED_USER_ID={ALLOWED_USER_ID}")
 
-    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    app = (
+        Application.builder()
+        .token(TELEGRAM_BOT_TOKEN)
+        .connect_timeout(30.0)
+        .read_timeout(60.0)
+        .write_timeout(60.0)
+        .pool_timeout(30.0)
+        .build()
+    )
     app.add_handler(CommandHandler("start", start))
     app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, process_audio_message))
 
