@@ -1332,7 +1332,7 @@ async def run_bot():
 
     await app.initialize()
     await app.start()
-    await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+    await app.updater.start_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
     logger.info("Bot rodando... aguardando mensagens.")
     await asyncio.Event().wait()
 
