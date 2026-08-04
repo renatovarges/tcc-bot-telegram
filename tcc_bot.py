@@ -1073,7 +1073,7 @@ def generate_legend(transcript: str) -> str:
                 )
             }
         ],
-        temperature=0.2,
+        temperature=0.4,
         max_tokens=get_legend_max_tokens(transcript),
         continue_instruction=(
             "Continue exatamente do ponto em que parou. "
