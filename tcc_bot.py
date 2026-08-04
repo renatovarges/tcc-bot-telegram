@@ -639,7 +639,7 @@ def load_player_reference():
     whisper_names = []
     teams_dict = {}
     csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
-                            "cartola_2026_jogadores_nome_posicao_time_20260303_154646.csv")
+                            "cartola_2026_jogadores_nome_posicao_time_20260804_122335.csv")
     try:
         with open(csv_path, newline='', encoding='utf-8') as f:
             reader = csv.DictReader(f)
@@ -685,6 +685,7 @@ REGRAS GERAIS:
 5. Se houver dúvida real entre dois jogadores distintos sem contexto de time, mantenha como está.
 6. Nunca invente um nome que não esteja na referência abaixo.
 7. Para nomes de times, corrija apenas quando houver erro claro do Whisper. Não troque uma forma válida por outra só por padronização.
+8. A REFERÊNCIA OFICIAL e os ELENCOS POR TIME podem estar desatualizados (jogadores mudam de time ao longo da temporada). Nunca troque um jogador por outro jogador de um time diferente só porque a referência diz que ele joga naquele time — isso pode estar errado. Use o elenco apenas para desambiguar entre nomes foneticamente parecidos, nunca para "corrigir" um jogador para outro por causa do time. Na dúvida entre confiar na referência desatualizada ou no que foi dito no áudio, preserve o nome exatamente como veio na transcrição.
 
 ERROS CONHECIDOS DO WHISPER — CORRIJA SEMPRE:
 - "Caio Jorge" → "Kaio Jorge" (não existe Caio Jorge no Brasileirão)
@@ -890,9 +891,10 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - Nao invente contexto, causa, consequencia, comparacao, estatistica ou conclusao que nao foi falada.
 - Use exatamente os nomes de jogadores, tecnicos e times como aparecem na transcricao recebida.
 - Se um nome estiver ambiguo, preserve como veio na transcricao.
-- E permitido reorganizar a ordem das ideias e cruzar pontos de blocos diferentes do audio.
+- E permitido reorganizar a ordem das ideias dentro do mesmo assunto/bloco do audio.
+- NUNCA combine, compare ou misture conclusoes, ressalvas ou argumentos de blocos/assuntos diferentes do audio. Cada conclusao fica associada exatamente ao assunto sobre o qual ela foi dita. Misturar blocos pode inverter o que o locutor quis dizer.
 - Resuma removendo repeticao, muleta e desvios, sem amputar a ideia principal.
-- Fidelidade e obrigatoria; cronologia literal nao e obrigatoria.
+- Fidelidade e obrigatoria; cronologia literal nao e obrigatoria dentro do mesmo bloco.
 </regras_inviolaveis>
 
 <formato>
@@ -945,10 +947,11 @@ Bom: "<b>COMO EU USO ISSO NA PRATICA</b>"
 Antes de responder, verifique em silencio:
 1. Nenhum nome de time ou jogador foi trocado por memoria.
 2. Nenhum ponto foi inventado.
-3. Os bullets fazem sentido sozinhos.
-4. O titulo esta obvio e fiel ao que o locutor introduziu.
-5. Os subtitulos ajudam a leitura.
-6. Os emojis sao poucos, combinam com o assunto e nao aparecem no inicio dos bullets.
+3. Nenhuma conclusao ou ressalva foi misturada entre blocos/assuntos diferentes do audio.
+4. Os bullets fazem sentido sozinhos.
+5. O titulo esta obvio e fiel ao que o locutor introduziu.
+6. Os subtitulos ajudam a leitura.
+7. Os emojis sao poucos, combinam com o assunto e nao aparecem no inicio dos bullets.
 </checklist_interno>
 """
 
@@ -1070,7 +1073,7 @@ def generate_legend(transcript: str) -> str:
                 )
             }
         ],
-        temperature=0.4,
+        temperature=0.2,
         max_tokens=get_legend_max_tokens(transcript),
         continue_instruction=(
             "Continue exatamente do ponto em que parou. "
