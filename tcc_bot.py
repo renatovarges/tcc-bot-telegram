@@ -864,6 +864,10 @@ A transcrição do usuário vem a seguir. Siga o estilo dos exemplos acima — e
 # ── Servidor HTTP para health check ──────────────────────────────────────────
 
 class HealthHandler(BaseHTTPRequestHandler):
+    def do_HEAD(self):
+        self.send_response(200)
+        self.end_headers()
+
     def do_GET(self):
         self.send_response(200)
         self.end_headers()

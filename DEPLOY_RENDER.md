@@ -104,21 +104,21 @@ Escolha o plano **"Free"** (é gratuito!)
 ### 5.2 - Adicionar primeira variável: TELEGRAM_BOT_TOKEN
 
 1. **Key:** `TELEGRAM_BOT_TOKEN`
-2. **Value:** `8783235585:AAE4hpyW3QNK_X0aJ7Fy-uMw79j15bktEFA`
+2. **Value:** `1234567890:EXEMPLO_DE_TOKEN_DO_TELEGRAM`
 3. Clique em **"Add"**
 
 ### 5.3 - Adicionar segunda variável: OPENAI_API_KEY
 
 1. Clique novamente em **"Add Environment Variable"**
 2. **Key:** `OPENAI_API_KEY`
-3. **Value:** `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`
+3. **Value:** `sk-proj-EXEMPLO_DE_CHAVE_OPENAI`
 4. Clique em **"Add"**
 
 ### 5.4 - Adicionar terceira variável: ALLOWED_USER_ID
 
 1. Clique novamente em **"Add Environment Variable"**
 2. **Key:** `ALLOWED_USER_ID`
-3. **Value:** `5524998639678`
+3. **Value:** `123456789`
 4. Clique em **"Add"**
 
 ---
