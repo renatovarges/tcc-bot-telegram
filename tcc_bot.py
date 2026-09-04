@@ -37,7 +37,7 @@ ALLOWED_USER_ID = int(os.getenv('ALLOWED_USER_ID', '0'))
 PORT = int(os.getenv('PORT', '10000'))
 LEGACY_OPENAI_TEXT_MODEL = os.getenv('OPENAI_TEXT_MODEL')
 OPENAI_TRANSCRIPTION_MODEL = os.getenv('OPENAI_TRANSCRIPTION_MODEL', 'gpt-4o-mini-transcribe')
-OPENAI_NAMES_MODEL = os.getenv('OPENAI_NAMES_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-4.1-mini')
+OPENAI_NAMES_MODEL = os.getenv('OPENAI_NAMES_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-4.1')
 OPENAI_CAPTION_MODEL = os.getenv('OPENAI_CAPTION_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-4.1')
 OPENAI_AUDIO_SIZE_LIMIT_BYTES = 25 * 1024 * 1024
 SUPPORTED_TRANSCRIPTION_EXTENSIONS = {
@@ -629,40 +629,101 @@ def _post_openai(url: str, *, timeout: float, action_name: str, **kwargs) -> htt
     raise RuntimeError(f"Falha inesperada ao executar {action_name}")
 
 
-def load_player_reference():
-    """Carrega o CSV de jogadores e retorna:
-    - referencia: 'Apelido (Time): Nome completo' por linha
-    - whisper_prompt: apelidos para guiar o Whisper
-    - times_ref: jogadores agrupados por time
+# Mapa de abreviacao -> nome de exibicao dos times da Serie A. A API do Cartola
+# so devolve a abreviacao (ex: "CAP"), entao mantemos o nome completo aqui.
+CARTOLA_TEAM_NAMES = {
+    'BAH': 'Bahia', 'BOT': 'Botafogo', 'CAM': 'Atlético-MG', 'CAP': 'Athlético-PR',
+    'CFC': 'Coritiba', 'CHA': 'Chapecoense', 'COR': 'Corinthians', 'CRU': 'Cruzeiro',
+    'FLA': 'Flamengo', 'FLU': 'Fluminense', 'GRE': 'Grêmio', 'INT': 'Internacional',
+    'MIR': 'Mirassol', 'PAL': 'Palmeiras', 'RBB': 'Bragantino', 'REM': 'Remo',
+    'SAN': 'Santos', 'SAO': 'São Paulo', 'VAS': 'Vasco', 'VIT': 'Vitória',
+}
+
+
+def _build_reference_strings(player_rows):
+    """player_rows: iteravel de (apelido, nome, time).
+    Retorna (referencia, whisper_names, times_ref, total_jogadores, total_times).
     """
     ref_lines = []
     whisper_names = []
     teams_dict = {}
+    seen = set()
+    for apelido, nome, time in player_rows:
+        apelido = (apelido or "").strip()
+        nome = (nome or "").strip()
+        time = (time or "").strip()
+        if not apelido or not time:
+            continue
+        if apelido not in seen:
+            seen.add(apelido)
+            ref_lines.append(f"{apelido} ({time}): {nome}")
+            whisper_names.append(apelido)
+        teams_dict.setdefault(time, [])
+        if apelido not in teams_dict[time]:
+            teams_dict[time].append(apelido)
+
+    team_ref_lines = [f"{t}: {', '.join(p)}" for t, p in sorted(teams_dict.items())]
+    return (
+        "\n".join(ref_lines),
+        ", ".join(whisper_names[:120]),
+        "\n".join(team_ref_lines),
+        len(ref_lines),
+        len(teams_dict),
+    )
+
+
+def _fetch_players_from_cartola_api(timeout: float = 10.0):
+    """Busca o elenco atual direto da API publica do Cartola FC. Levanta excecao se falhar."""
+    with httpx.Client(timeout=timeout) as client:
+        response = client.get("https://api.cartola.globo.com/atletas/mercado")
+        response.raise_for_status()
+        data = response.json()
+
+    clubes = data["clubes"]
+    rows = []
+    for atleta in data["atletas"]:
+        clube = clubes.get(str(atleta["clube_id"]))
+        if not clube:
+            continue
+        time_nome = CARTOLA_TEAM_NAMES.get(clube["abreviacao"])
+        if not time_nome:
+            continue
+        rows.append((atleta["apelido"], atleta["nome"], time_nome))
+
+    if not rows:
+        raise ValueError("API do Cartola retornou lista de atletas vazia")
+    return rows
+
+
+def _load_players_from_csv():
     csv_path = os.path.join(os.path.dirname(os.path.abspath(__file__)),
                             "cartola_2026_jogadores_nome_posicao_time_20260804_122335.csv")
-    try:
-        with open(csv_path, newline='', encoding='utf-8') as f:
-            reader = csv.DictReader(f)
-            seen = set()
-            for row in reader:
-                apelido = row['apelido'].strip()
-                nome = row['nome'].strip()
-                time = row['time'].strip()
-                if apelido not in seen:
-                    seen.add(apelido)
-                    ref_lines.append(f"{apelido} ({time}): {nome}")
-                    whisper_names.append(apelido)
-                teams_dict.setdefault(time, [])
-                if apelido not in teams_dict[time]:
-                    teams_dict[time].append(apelido)
+    with open(csv_path, newline='', encoding='utf-8') as f:
+        reader = csv.DictReader(f)
+        return [(row['apelido'], row['nome'], row['time']) for row in reader]
 
-        team_ref_lines = [f"{t}: {', '.join(p)}" for t, p in sorted(teams_dict.items())]
-        team_ref = "\n".join(team_ref_lines)
-        logger.info(f"CSV carregado: {len(ref_lines)} jogadores, {len(teams_dict)} times")
-    except Exception as e:
-        logger.warning(f"CSV não carregado, usando lista fallback: {e}")
-        team_ref = ""
-    return "\n".join(ref_lines), ", ".join(whisper_names[:120]), team_ref
+
+def load_player_reference():
+    """Carrega o elenco atual (API do Cartola, com fallback pro CSV local se a API falhar) e retorna:
+    - referencia: 'Apelido (Time): Nome completo' por linha
+    - whisper_prompt: apelidos para guiar o Whisper
+    - times_ref: jogadores agrupados por time
+    """
+    try:
+        rows = _fetch_players_from_cartola_api()
+        source = "API do Cartola (ao vivo)"
+    except Exception as api_error:
+        logger.warning(f"Falha ao buscar elenco ao vivo na API do Cartola, usando CSV local de fallback: {api_error}")
+        try:
+            rows = _load_players_from_csv()
+            source = "CSV local (fallback, pode estar desatualizado)"
+        except Exception as csv_error:
+            logger.warning(f"CSV de fallback tambem falhou ao carregar: {csv_error}")
+            return "", "", ""
+
+    ref, whisper, team_ref, n_players, n_teams = _build_reference_strings(rows)
+    logger.info(f"Elenco carregado via {source}: {n_players} jogadores, {n_teams} times")
+    return ref, whisper, team_ref
 
 
 JOGADORES_REFERENCIA, WHISPER_NAMES, TIMES_REFERENCIA = load_player_reference()
