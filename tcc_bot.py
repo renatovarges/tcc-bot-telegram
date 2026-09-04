@@ -39,8 +39,8 @@ ALLOWED_USER_ID = int(os.getenv('ALLOWED_USER_ID', '0'))
 PORT = int(os.getenv('PORT', '10000'))
 LEGACY_OPENAI_TEXT_MODEL = os.getenv('OPENAI_TEXT_MODEL')
 OPENAI_TRANSCRIPTION_MODEL = os.getenv('OPENAI_TRANSCRIPTION_MODEL', 'gpt-transcribe')
-OPENAI_NAMES_MODEL = os.getenv('OPENAI_NAMES_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-4.1')
-OPENAI_CAPTION_MODEL = os.getenv('OPENAI_CAPTION_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-4.1')
+OPENAI_NAMES_MODEL = os.getenv('OPENAI_NAMES_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-5.6-terra')
+OPENAI_CAPTION_MODEL = os.getenv('OPENAI_CAPTION_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-5.6-sol')
 OPENAI_AUDIO_SIZE_LIMIT_BYTES = 25 * 1024 * 1024
 SUPPORTED_TRANSCRIPTION_EXTENSIONS = {
     ".flac",
@@ -455,6 +455,13 @@ def _merge_with_overlap(base: str, addition: str) -> str:
     return base + separator + addition
 
 
+def _is_reasoning_model(model: str) -> bool:
+    """Modelos de raciocinio (familia GPT-5.x em diante) nao aceitam temperature/top_p
+    via Chat Completions e usam max_completion_tokens em vez de max_tokens."""
+    model = (model or "").lower()
+    return not (model.startswith("gpt-4") or model.startswith("gpt-3"))
+
+
 def _chat_completion_with_auto_continue(
     *,
     action_name: str,
@@ -468,18 +475,21 @@ def _chat_completion_with_auto_continue(
 ) -> str:
     conversation = [dict(message) for message in messages]
     combined_text = ""
+    reasoning_model = _is_reasoning_model(model)
 
     for round_index in range(1, max_rounds + 1):
+        payload = {"model": model, "messages": conversation}
+        if reasoning_model:
+            payload["max_completion_tokens"] = max_tokens
+        else:
+            payload["temperature"] = temperature
+            payload["max_tokens"] = max_tokens
+
         response = _post_openai(
             "https://api.openai.com/v1/chat/completions",
             timeout=timeout,
             action_name=action_name,
-            json={
-                "model": model,
-                "messages": conversation,
-                "temperature": temperature,
-                "max_tokens": max_tokens,
-            }
+            json=payload,
         )
         chunk, finish_reason = _extract_chat_completion_text(response, action_name)
         combined_text = _merge_with_overlap(combined_text, chunk)
