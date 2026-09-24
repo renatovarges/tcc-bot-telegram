@@ -96,7 +96,100 @@ BULLET_LEADING_EMOJI_PATTERN = re.compile(
 TITLE_EDGE_CLEANUP_PATTERN = re.compile(r"^[\s\-:;|\u2022\u2013\u2014]+|[\s\-:;|\u2022\u2013\u2014]+$")
 DEFAULT_TITLE_EMOJI = "\U0001F4CC"
 MAX_HEADING_EMOJIS = 3
+# acima disso a linha vira enumeracao ("Palmeiras, Vasco, Bahia, Flamengo...") e os
+# escudos poluem mais do que ajudam
+MAX_SHIELDS_PER_LINE = 3
 CUSTOM_EMOJI_ROLE_PATTERN = re.compile(r'[^a-z0-9]+')
+CUSTOM_EMOJI_MARKER_PATTERN = re.compile(r'\[\[emoji:([a-z0-9-]+)\]\]', re.IGNORECASE)
+
+# Assunto da linha -> (papel Premium preferido, emoji comum de reserva).
+# A ordem importa: o primeiro padrão que casar vence, então o mais específico vem antes.
+THEME_RULES: tuple[tuple[str, str, str], ...] = (
+    (r"les[aeoã]|lesion|machuc|contus|dores|cirurg|entorse|departamento medico", "lesao", "\U0001F691"),
+    (r"suspens|suspenso|expuls|cartao vermelho|vermelho", "suspensao", "\U0001F7E5"),
+    (r"pendurad|cartao amarelo|amarelo", "pendurado", "\U0001F7E8"),
+    (r"poupad|preserv|descans|rodizio", "poupado", "\u26F1"),
+    (r"convocad|convocac|selecao|data fifa", "convocacao", "\U0001F4C4"),
+    (r"desfalq|ausenc|nao joga|fora do jogo|fora da rodada", "desfalque", "\u274C"),
+    (r"retorn|volta|voltou|recuperad|liberad", "retorno", "\u2705"),
+    (r"quem entra|substitu|entra no lugar", "entra", "\U0001F46F"),
+    (r"mercad|contratac|contratad|venda|vendid|reforc|negocia|transferenc|saida", "mercado", "\U0001F4B0"),
+    (r"tecnic|treinador|comissao", "tecnico", "\U0001F393"),
+    (r"escala|onze|titular|provave|time provavel", "jogo", "\u261D"),
+    (r"relacionad", "nomes-importantes", "\U0001F4DD"),
+    (r"estatistic|numero|percentual|media|dado|grafico|tabela", "estatisticas-e-numeros", "\U0001F4C8"),
+    (r"defes|zaga|zagueir|goleir|lateral|defensiv", "defesa", "\U0001F6E1"),
+    (r"ataqu|atacant|\bgol\b|gols|ofensiv|finaliza|artilheir", "ataque", "\u26BD"),
+    # temas sem escudo/emoji Premium cadastrado: entra o emoji comum
+    (r"tatic|esquema|formacao|estrateg|sistema", "tatica", "\U0001F9E0"),
+    (r"preco|valorizac|cartoleta|patrimonio|mitad", "preco", "\U0001F4B8"),
+    (r"duvida|indefinid|incerteza", "duvida", "\u2753"),
+    (r"confronto|duelo|classic|quem leva|x\b", "confronto", "\u2694"),
+    (r"capitao|escolha|aposta|palpite", "capitao", "\U0001F3AF"),
+    (r"clima|chuva|gramado|campo pesado", "clima", "\U0001F327"),
+    (r"torcida|publico|casa cheia", "torcida", "\U0001F4E3"),
+    (r"mandante|em casa|jogando em casa|como mandante", "mandante", "\U0001F3E0"),
+    (r"visitante|fora de casa|como visitante|jogando fora", "visitante", "\u2708"),
+    (r"\bsg\b|sem sofrer|goleir|defesa vazada", "goleiro", "\U0001F9E4"),
+    (r"valoriza|valorizou|subiu de preco|mitou|patrimonio", "valorizacao", "\U0001F680"),
+    (r"tabela|classificac|colocad|\bg4\b|\bz4\b|lideranca|rebaixament", "tabela", "\U0001F4CA"),
+    (r"libertadores|sul-americana|sul americana|copa do brasil|mata-mata", "copa", "\U0001F30E"),
+    (r"bola parada|escanteio|falta|penalti|cobranca", "bola-parada", "\U0001F6A9"),
+    (r"desarme|roubada de bola|marcacao|combate", "desarme", "\U0001F9F9"),
+    (r"no cartola|meu time|time do canal|escalacao do canal|mitar", "cartola", "\U0001F3A9"),
+    (r"resumindo|no fim das contas|conclus|minha escolha|fechando", "conclusao", "\U0001F3C1"),
+    (r"gosto muito|melhor opcao|pode ir|vale a pena|aprovad", "positivo", "\U0001F44D"),
+    (r"nao gosto|evitaria|fico fora|nao vou|descartad|fugir", "negativo", "\u274C"),
+    (r"cruzament|cedido|conquistad|\bxg\b|painel|regua|balanco", "estatisticas-e-numeros",
+     "\U0001F4CA"),
+    (r"favoritismo|favorito|parelho|equilibrad", "confronto", "\u2696"),
+    (r"nomes fortes|nomes que|radar|interesse|gosto mais|buscaria|onde eu", "ficar-de-olho",
+     "\U0001F440"),
+    (r"proteger|ousar|risco|cuidado|armadilha|evitar|fugir", "alerta", "\u26A0"),
+    (r"momento|fase|sequencia|desempenho", "estatisticas-e-numeros", "\U0001F4C8"),
+    (r"pos-rodada|pos rodada|balanco geral|como foi", "boletim", "\U0001F4F0"),
+    (r"calendario|contexto|entre sexta|entre segunda", "agenda", "\U0001F4C6"),
+    (r"olho|monitor|acompanh|observ", "ficar-de-olho", "\U0001F440"),
+    (r"destaqu|melhor|craque|top\b|estrela", "destaque", "\U0001F31F"),
+    (r"alerta|risco|perigo|cuidado|armadilha", "alerta", "\U0001F6A8"),
+    (r"important|decisiv|fundamental|essencial", "importante", "\U0001F4A5"),
+    (r"aviso|atencao", "aviso", "\u26A0"),
+    (r"agenda|calendario|prazo|fechamento do mercado|data limite|horario dos jogos", "agenda", "\U0001F4C6"),
+    (r"estadio|mando|casa|fora de casa", "estadio", "\U0001F3DF"),
+    (r"transmiss|assistir|\btv\b|premiere|globo", "transmissao", "\U0001F4FA"),
+    (r"brasileirao|serie a|campeonato", "brasileirao", "\U0001F3C6"),
+    (r"\bcbf\b|confederacao", "cbf", "\U0001F3DB"),
+    (r"anuncio|oficial|comunicado|confirmad", "anuncio", "\U0001F4E2"),
+    (r"novidade|estreia|novo|nova", "novidade", "\U0001F195"),
+    (r"boletim|resumo|panorama|balanco", "boletim", "\U0001F4F0"),
+    (r"leitura|analise|criterio|interpretac|como eu|onde eu|na pratica|o que eu", "leitura", "\U0001F50E"),
+    (r"nome|jogador|elenco|escalacoes", "nomes-importantes", "\U0001F4DD"),
+    (r"fonte|link|referencia", "link", "\U0001F517"),
+)
+
+# nomes alternativos pelos quais o locutor cita cada time no áudio
+CLUB_ALIASES: dict[str, tuple[str, ...]] = {
+    "athletico-pr": ("Athletico", "Athlético", "Athletico-PR", "Atlético-PR",
+                     "Athletico Paranaense", "Atlético Paranaense", "Furacão", "CAP"),
+    "atletico-mg": ("Atlético", "Atlético-MG", "Atlético Mineiro", "Galo"),
+    "bahia": ("Esquadrão",),
+    "botafogo": ("Fogão", "Glorioso"),
+    "bragantino": ("RB Bragantino", "Red Bull Bragantino", "Massa Bruta"),
+    "chapecoense": ("Chape",),
+    "corinthians": ("Timão",),
+    "coritiba": ("Coxa",),
+    "cruzeiro": ("Raposa",),
+    "flamengo": ("Mengão", "Fla"),
+    "fluminense": ("Flu", "Tricolor carioca"),
+    "gremio": ("Grêmio", "Imortal"),
+    "internacional": ("Inter", "Colorado"),
+    "palmeiras": ("Verdão", "Porco"),
+    "remo": ("Leão Azul",),
+    "santos": ("Peixe",),
+    "sao-paulo": ("São Paulo", "SPFC", "Tricolor paulista"),
+    "vasco": ("Vasco da Gama", "Cruzmaltino"),
+    "vitoria": ("Leão da Barra",),
+}
 custom_emoji_map: dict[str, dict[str, str]] = {}
 custom_emoji_lock = threading.Lock()
 
@@ -255,20 +348,34 @@ def apply_custom_emojis(text: str) -> str:
 
 
 def get_custom_emoji_instruction() -> str:
+    """Explica ao modelo como pedir cada emoji Premium, por significado."""
     with custom_emoji_lock:
-        roles = sorted(custom_emoji_map)
+        roles = set(custom_emoji_map)
 
     if not roles:
         return ''
 
+    times = sorted(r for r in roles if r in {_normalize_emoji_role(n)
+                                             for n in CARTOLA_TEAM_NAMES.values()})
+    temas = sorted(roles - set(times))
     return (
-        "Emojis Premium disponiveis por papel: " + ", ".join(roles) + ". "
-        "Para confronto entre dois times, formate exatamente como "
-        "[[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>. "
-        "Ao abrir um topico dedicado a um time, use [[emoji:time]] <b>TIME</b>, sem preposicao antes do nome. "
-        "Para os demais papeis, use [[emoji:papel]] apenas quando melhorar de verdade a leitura. "
-        "Use exatamente os papeis da lista, preserve os marcadores literalmente, nao troque escudos "
-        "e evite poluicao visual."
+        "EMOJIS DO CANAL (marcadores obrigatorios)\n"
+        "- Escreva o marcador [[emoji:papel]] e nada mais: o bot troca pelo emoji certo.\n"
+        "- TODO titulo e TODO subtitulo comecam com um marcador, antes do <b>.\n"
+        "- Quando citar um time, escreva [[emoji:time]] antes do nome, tambem dentro dos bullets, "
+        "na primeira vez que ele aparecer na linha.\n"
+        "- Confronto: [[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>.\n"
+        "- Nunca use escudo de time como enfeite nem troque o escudo do adversario.\n"
+        "- Fora isso, no maximo 1 emoji por bloco: a legenda nao pode virar carnaval de icones.\n"
+        "- Se nenhum papel servir, escreva um emoji comum adequado ao assunto.\n"
+        f"- Papeis de time: {', '.join(times)}.\n"
+        f"- Papeis de assunto: {', '.join(temas)}.\n"
+        "- Escolha o papel pelo SENTIDO: lesao para lesionado/machucado, suspensao para suspenso, "
+        "pendurado para quem esta no limite de cartoes, poupado para quem descansa, mercado para "
+        "contratacao/venda, tecnico para treinador, jogo para escalacao/time provavel, defesa e "
+        "ataque para setores, estatisticas-e-numeros para tabelas e percentuais, ficar-de-olho "
+        "para quem merece atencao, destaque para o melhor da rodada, alerta para risco, "
+        "importante para o que muda a decisao, agenda para datas e prazos."
     )
 
 
@@ -280,68 +387,171 @@ def _normalize_role_search_text(text: str) -> str:
     return f" {' '.join(normalized.split())} "
 
 
-def apply_contextual_custom_emoji_roles(text: str) -> str:
-    """Padroniza escudos de times e marca outros papéis em títulos."""
+def _theme_for_text(text: str) -> tuple[str | None, str]:
+    """Assunto da linha -> (papel Premium cadastrado, emoji comum de reserva).
+
+    Serve para títulos e subtítulos: se o papel existir no cadastro, usa o Premium;
+    se não existir, entra o emoji comum equivalente, nunca um genérico.
+    """
+    searchable = _normalize_role_search_text(text)
+    with custom_emoji_lock:
+        cadastrados = set(custom_emoji_map)
+
+    for pattern, role, common in THEME_RULES:
+        if re.search(pattern, searchable):
+            return (role if role in cadastrados else None), common
+    return None, DEFAULT_TITLE_EMOJI
+
+
+def _line_already_has_emoji(line: str) -> bool:
+    prefix = line.split("<b>", 1)[0]
+    return bool(TITLE_EMOJI_PATTERN.search(prefix) or CUSTOM_EMOJI_MARKER_PATTERN.search(prefix))
+
+
+# nomes de time que também são palavras comuns do dia a dia ("a vitória sobre o São Paulo",
+# "Júnior Santos"): só valem quando escritos com inicial maiúscula e sem nome próprio antes
+CLUB_AMBIGUOUS = {"vitoria", "santos", "bahia", "remo", "internacional"}
+NAME_PREFIX_OK = {"o", "a", "os", "as", "do", "da", "no", "na", "ao", "de", "em", "com", "contra",
+                  "para", "entre", "sobre", "pelo", "pela", "que", "e", "ou", "mas", "um", "uma"}
+
+
+def _club_variants() -> list[tuple[str, str]]:
+    """[(variante do nome, papel do escudo)], do nome mais longo para o mais curto."""
+    with custom_emoji_lock:
+        cadastrados = set(custom_emoji_map)
+
+    variantes: list[tuple[str, str]] = []
+    for team_name in CARTOLA_TEAM_NAMES.values():
+        role = _normalize_emoji_role(team_name)
+        if role not in cadastrados:
+            continue
+        for nome in {team_name, *CLUB_ALIASES.get(role, ())}:
+            variantes.append((nome, role))
+            sem_acento = ''.join(
+                char for char in unicodedata.normalize('NFKD', nome)
+                if not unicodedata.combining(char)
+            )
+            if sem_acento != nome:
+                variantes.append((sem_acento, role))
+    # "Atlético Paranaense" precisa ser testado antes de "Atlético"
+    variantes.sort(key=lambda item: len(item[0]), reverse=True)
+    return variantes
+
+
+def _club_shield_pattern() -> tuple[re.Pattern[str], dict[str, str]]:
+    variantes = _club_variants()
+    if not variantes:
+        return re.compile(r"(?!x)x"), {}
+    alternativas = "|".join(re.escape(nome) for nome, _ in variantes)
+    por_nome = {_normalize_emoji_role(nome): role for nome, role in reversed(variantes)}
+    return re.compile(rf"(?<![\w-])({alternativas})(?![\w-])", re.IGNORECASE), por_nome
+
+
+def _shield_is_valid(linha: str, match: re.Match[str], role: str) -> bool:
+    """Evita escudo em 'a vitória sobre o São Paulo' ou no sobrenome 'Júnior Santos'."""
+    if role not in CLUB_AMBIGUOUS:
+        return True
+    trecho = match.group(0)
+    if not trecho[:1].isupper():
+        return False
+    anterior = re.search(r"([\wÀ-ú-]+)\s*$", linha[:match.start()])
+    if anterior:
+        palavra = anterior.group(1)
+        if palavra[:1].isupper() and len(palavra) > 2 and palavra.lower() not in NAME_PREFIX_OK:
+            return False        # provavelmente um nome de pessoa antes ("Júnior Santos")
+    return True
+
+
+def _roles_already_tagged(linha: str) -> set[str]:
+    """Papéis que já aparecem na linha como tag pronta <tg-emoji emoji-id=...>."""
+    with custom_emoji_lock:
+        por_id = {entry['id']: role for role, entry in custom_emoji_map.items()}
+    return {por_id[emoji_id] for emoji_id in re.findall(r'<tg-emoji emoji-id="(\d+)"', linha)
+            if emoji_id in por_id}
+
+
+def apply_club_shields(text: str) -> str:
+    """Escudo Premium antes do nome de cada time citado (uma vez por linha, sem repetir)."""
     if not text:
         return text
 
-    with custom_emoji_lock:
-        roles = sorted(custom_emoji_map, key=len, reverse=True)
-
-    team_names_by_role = {
-        _normalize_emoji_role(team_name): team_name.upper()
-        for team_name in CARTOLA_TEAM_NAMES.values()
-    }
-    team_roles = {role for role in roles if role in team_names_by_role}
-
-    if not roles:
+    pattern, por_nome = _club_shield_pattern()
+    if not por_nome:
         return text
 
-    result: list[str] = []
-    for line in text.splitlines():
-        bold_index = line.lower().find('<b>')
-        if bold_index < 0:
-            result.append(line)
+    linhas = []
+    for linha in text.splitlines():
+        ja_marcados = {m.group(1).lower() for m in CUSTOM_EMOJI_MARKER_PATTERN.finditer(linha)}
+        ja_marcados |= _roles_already_tagged(linha)
+        citados = {por_nome.get(_normalize_emoji_role(m.group(0)))
+                   for m in pattern.finditer(linha)}
+        if len(citados - {None}) > MAX_SHIELDS_PER_LINE:
+            linhas.append(linha)       # lista longa de times: escudo em todos poluiria
+            continue
+        posicao = 0
+        while True:
+            busca = pattern.search(linha, posicao)
+            if not busca:
+                break
+            role = por_nome.get(_normalize_emoji_role(busca.group(0)))
+            antes = linha[:busca.start()]
+            dentro_de_tag = antes.count("<") != antes.count(">")
+            if (not role or role in ja_marcados or dentro_de_tag
+                    or not _shield_is_valid(linha, busca, role)):
+                posicao = busca.end()
+                continue
+
+            ja_marcados.add(role)
+            marca = f"[[emoji:{role}]] "
+            corte = busca.start()
+            if antes.rstrip().lower().endswith("<b>"):
+                corte = antes.lower().rindex("<b>")   # o escudo vem antes do negrito
+            inicio, resto = linha[:corte], linha[corte:]
+            # escudo abrindo o título: o emoji genérico que estava ali sai de cena
+            if not TITLE_EMOJI_PATTERN.sub("", inicio).strip() and TITLE_EMOJI_PATTERN.search(inicio):
+                inicio = inicio[:len(inicio) - len(inicio.lstrip())]
+            linha = inicio + marca + resto
+            posicao = len(inicio) + len(marca) + (busca.end() - corte)
+        linhas.append(linha)
+    return "\n".join(linhas)
+
+
+def apply_contextual_custom_emoji_roles(text: str) -> str:
+    """Garante um emoji no começo de cada título/subtítulo, PRESERVANDO o texto da linha."""
+    if not text:
+        return text
+
+    resultado = []
+    for linha in text.splitlines():
+        sem_tags = _strip_html_tags(linha).strip()
+        eh_titulo = "<b>" in linha.lower() and not sem_tags.startswith("-")
+        if not eh_titulo or _line_already_has_emoji(linha):
+            resultado.append(linha)
             continue
 
-        prefix = line[:bold_index]
-        prefix_without_emoji = TITLE_EMOJI_PATTERN.sub('', prefix, count=1).strip()
-        if prefix_without_emoji:
-            result.append(line)
-            continue
+        role, common = _theme_for_text(linha)
+        marca = f"[[emoji:{role}]]" if role else common
+        indentacao = linha[:len(linha) - len(linha.lstrip())]
+        resultado.append(f"{indentacao}{marca} {linha.lstrip()}")
+    return "\n".join(resultado)
 
-        searchable = _normalize_role_search_text(line)
-        matches = [
-            role for role in roles
-            if f" {role.replace('-', ' ')} " in searchable
-        ]
-        matched_teams = [role for role in matches if role in team_roles]
-        indentation = line[:len(line) - len(line.lstrip())]
 
-        if len(matched_teams) == 2 and re.search(r'\b(?:x|vs|versus|contra)\b', searchable):
-            matched_teams.sort(key=lambda role: searchable.index(f" {role.replace('-', ' ')} "))
-            first_role, second_role = matched_teams
-            result.append(
-                f"{indentation}[[emoji:{first_role}]] <b>{team_names_by_role[first_role]}</b> "
-                f"X [[emoji:{second_role}]] <b>{team_names_by_role[second_role]}</b>"
-            )
-            continue
+def cleanup_emoji_markers(text: str) -> str:
+    """Marcador que sobrou (papel inexistente) vira o emoji comum do assunto."""
+    if not text:
+        return text
 
-        if len(matched_teams) == 1:
-            team_role = matched_teams[0]
-            result.append(
-                f"{indentation}[[emoji:{team_role}]] <b>{team_names_by_role[team_role]}</b>"
-            )
-            continue
+    def _resolver(match: re.Match[str]) -> str:
+        role = _normalize_emoji_role(match.group(1))
+        premium, common = _theme_for_text(role.replace("-", " "))
+        if premium:
+            with custom_emoji_lock:
+                entry = custom_emoji_map.get(premium)
+            if entry:
+                return f'<tg-emoji emoji-id="{entry["id"]}">{entry["emoji"]}</tg-emoji>'
+        return common
 
-        non_team_matches = [role for role in matches if role not in team_roles]
-        if len(non_team_matches) != 1:
-            result.append(line)
-            continue
-
-        result.append(f"{indentation}[[emoji:{non_team_matches[0]}]] {line[bold_index:]}")
-
-    return '\n'.join(result)
+    return CUSTOM_EMOJI_MARKER_PATTERN.sub(_resolver, text)
 
 
 def _get_retry_delay(response: httpx.Response, attempt: int) -> float:
@@ -554,11 +764,15 @@ def strip_model_wrappers(text: str) -> str:
 
 
 def _first_title_emoji(*parts: str) -> str:
+    """Emoji que já existe no título. Vazio quando não há: a etapa contextual escolhe depois."""
     for part in parts:
         match = TITLE_EMOJI_PATTERN.search(part or "")
         if match:
             return match.group(0)
-    return DEFAULT_TITLE_EMOJI
+        marker = CUSTOM_EMOJI_MARKER_PATTERN.search(part or "")
+        if marker:
+            return marker.group(0)
+    return ""
 
 
 def _cleanup_title_text(text: str) -> str:
@@ -599,7 +813,7 @@ def _normalize_heading_line(line: str, *, force: bool = False) -> str | None:
 
         emoji = _first_title_emoji(before, title, after)
         safe_title = html.escape((title_text or outside_text or "ANALISE").upper(), quote=False)
-        return f"{emoji} <b>{safe_title}</b>"
+        return f"{emoji} <b>{safe_title}</b>".lstrip()
 
     title_text = _cleanup_title_text(stripped_line)
     if not force and not _looks_like_heading(title_text):
@@ -607,7 +821,7 @@ def _normalize_heading_line(line: str, *, force: bool = False) -> str | None:
 
     emoji = _first_title_emoji(stripped_line)
     safe_title = html.escape((title_text or "ANALISE").upper(), quote=False)
-    return f"{emoji} <b>{safe_title}</b>"
+    return f"{emoji} <b>{safe_title}</b>".lstrip()
 
 
 def force_main_title_uppercase(text: str) -> str:
@@ -1278,7 +1492,7 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - Quando estiver elencando times em topicos, cada topico deve comecar com o marcador do escudo seguido imediatamente de <b>NOME DO TIME</b> em CAIXA ALTA: [[emoji:time]] <b>TIME</b>.
 - Nunca use o escudo de um time como decoracao generica nem associe um escudo ao adversario errado.
 - Use emojis com parcimonia: 1 no titulo e no maximo 1 ou 2 em subtitulos realmente importantes. Em ambos, o emoji vem antes do <b>.
-- Nunca comece bullets com emoji. Bullet usa apenas "-"; o destaque visual fica no <b>, <i> e na frase.
+- Nunca comece bullets com emoji, exceto o escudo de um time citado no comeco da frase. Bullet usa apenas "-"; o destaque visual fica no <b>, <i> e na frase.
 - Prefira 3 a 5 bullets no total. Em audio longo, pode chegar ao limite informado se isso evitar amputar ideias.
 - Cada bullet precisa ter verbo e contexto minimo para fazer sentido sozinho.
 - Cada bullet deve caber em uma frase principal. So use uma segunda oracao curta se sem ela a ideia ficar manca.
@@ -1804,7 +2018,9 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         legend = force_main_title_uppercase(legend)
         legend = reduce_excess_line_emojis(legend)
         legend = apply_contextual_custom_emoji_roles(legend)
+        legend = apply_club_shields(legend)
         legend = apply_custom_emojis(legend)
+        legend = cleanup_emoji_markers(legend)
         if not _strip_html_tags(legend).strip():
             raise UserFacingError(
                 "❌ A legenda ficou vazia após o processamento. Tente enviar o áudio novamente."
