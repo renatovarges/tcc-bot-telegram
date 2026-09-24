@@ -45,6 +45,10 @@ OPENAI_NAMES_MODEL = os.getenv('OPENAI_NAMES_MODEL', LEGACY_OPENAI_TEXT_MODEL or
 OPENAI_CAPTION_MODEL = os.getenv('OPENAI_CAPTION_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-5.6-sol')
 OPENAI_AUDIO_SIZE_LIMIT_BYTES = 25 * 1024 * 1024
 CUSTOM_EMOJI_MAP_FILE = os.getenv('CUSTOM_EMOJI_MAP_FILE', 'custom_emojis.json')
+DEFAULT_CUSTOM_EMOJI_MAP_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    'custom_emojis.default.json',
+)
 CUSTOM_EMOJIS_JSON = os.getenv('CUSTOM_EMOJIS_JSON', '').strip()
 SUPPORTED_TRANSCRIPTION_EXTENSIONS = {
     ".flac",
@@ -134,6 +138,14 @@ def _validate_custom_emoji_map(data) -> dict[str, dict[str, str]]:
 
 def load_custom_emoji_map() -> None:
     loaded: dict[str, dict[str, str]] = {}
+
+    try:
+        with open(DEFAULT_CUSTOM_EMOJI_MAP_FILE, 'r', encoding='utf-8') as emoji_file:
+            loaded.update(_validate_custom_emoji_map(json.load(emoji_file)))
+    except FileNotFoundError:
+        pass
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        logger.error('Nao foi possivel carregar %s: %s', DEFAULT_CUSTOM_EMOJI_MAP_FILE, exc)
 
     if CUSTOM_EMOJIS_JSON:
         try:
@@ -687,6 +699,26 @@ def _merge_with_overlap(base: str, addition: str) -> str:
     return base + separator + addition
 
 
+def _is_invalid_model_output(text: str) -> bool:
+    plain_text = html.unescape(_strip_html_tags(text or '')).strip()
+    if not plain_text:
+        return True
+    if len(plain_text) > 300:
+        return False
+
+    normalized = unicodedata.normalize('NFKD', plain_text)
+    normalized = ''.join(char for char in normalized if not unicodedata.combining(char)).lower()
+    invalid_phrases = (
+        'nao ha um trecho anterior',
+        'nao ha trecho anterior',
+        'nao existe trecho anterior',
+        'nao recebi o trecho anterior',
+        'forneca o trecho anterior',
+        'message text is empty',
+    )
+    return any(phrase in normalized for phrase in invalid_phrases)
+
+
 def _is_reasoning_model(model: str) -> bool:
     """Modelos de raciocinio (familia GPT-5.x em diante) nao aceitam temperature/top_p
     via Chat Completions e usam max_completion_tokens em vez de max_tokens."""
@@ -708,14 +740,16 @@ def _chat_completion_with_auto_continue(
     conversation = [dict(message) for message in messages]
     combined_text = ""
     reasoning_model = _is_reasoning_model(model)
+    current_max_tokens = max_tokens
+    invalid_retries = 0
 
-    for round_index in range(1, max_rounds + 1):
+    for round_index in range(1, max_rounds + 3):
         payload = {"model": model, "messages": conversation}
         if reasoning_model:
-            payload["max_completion_tokens"] = max_tokens
+            payload["max_completion_tokens"] = current_max_tokens
         else:
             payload["temperature"] = temperature
-            payload["max_tokens"] = max_tokens
+            payload["max_tokens"] = current_max_tokens
 
         response = _post_openai(
             "https://api.openai.com/v1/chat/completions",
@@ -724,6 +758,32 @@ def _chat_completion_with_auto_continue(
             json=payload,
         )
         chunk, finish_reason = _extract_chat_completion_text(response, action_name)
+
+        if _is_invalid_model_output(chunk):
+            if combined_text:
+                logger.warning(
+                    "%s devolveu continuacao vazia/invalida; mantendo o texto valido acumulado.",
+                    action_name,
+                )
+                return combined_text.strip()
+
+            invalid_retries += 1
+            if invalid_retries <= 2:
+                current_max_tokens = min(max(current_max_tokens * 2, 1200), 8000)
+                logger.warning(
+                    "%s devolveu conteudo vazio/invalido (tentativa %s/2). "
+                    "Repetindo a solicitacao original com limite de %s tokens.",
+                    action_name,
+                    invalid_retries,
+                    current_max_tokens,
+                )
+                continue
+
+            raise UserFacingError(
+                "❌ A OpenAI não conseguiu gerar uma legenda válida agora. "
+                "Tente enviar o áudio novamente."
+            )
+
         combined_text = _merge_with_overlap(combined_text, chunk)
 
         if finish_reason != "length":
@@ -740,7 +800,7 @@ def _chat_completion_with_auto_continue(
             {"role": "user", "content": continue_instruction},
         ])
 
-    logger.warning("%s ainda terminou cortado após %s rodadas.", action_name, max_rounds)
+    logger.warning("%s ainda terminou cortado após %s rodadas.", action_name, max_rounds + 2)
     return combined_text.strip()
 
 
@@ -1735,12 +1795,20 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         legend = await asyncio.to_thread(enforce_entity_fidelity, corrected_transcript, legend)
         logger.info(f"Legenda revisada ({len(legend)} chars)")
         legend = strip_model_wrappers(legend)
+        if _is_invalid_model_output(legend):
+            raise UserFacingError(
+                "❌ A OpenAI não devolveu uma legenda válida. Tente enviar o áudio novamente."
+            )
         logger.info(f"Legenda sem wrappers de markdown ({len(legend)} chars)")
         legend = sanitize_telegram_html(legend)
         legend = force_main_title_uppercase(legend)
         legend = reduce_excess_line_emojis(legend)
         legend = apply_contextual_custom_emoji_roles(legend)
         legend = apply_custom_emojis(legend)
+        if not _strip_html_tags(legend).strip():
+            raise UserFacingError(
+                "❌ A legenda ficou vazia após o processamento. Tente enviar o áudio novamente."
+            )
         logger.info(f"Legenda sanitizada para HTML Telegram ({len(legend)} chars)")
 
         await processing_msg.edit_text(legend, parse_mode='HTML')
