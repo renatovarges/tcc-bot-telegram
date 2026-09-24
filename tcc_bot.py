@@ -149,6 +149,8 @@ THEME_RULES: tuple[tuple[str, str, str], ...] = (
     (r"momento|fase|sequencia|desempenho", "estatisticas-e-numeros", "\U0001F4C8"),
     (r"pos-rodada|pos rodada|balanco geral|como foi", "boletim", "\U0001F4F0"),
     (r"calendario|contexto|entre sexta|entre segunda", "agenda", "\U0001F4C6"),
+    (r"principais|possibilidades|opcoes|alternativas|linhas|candidat", "ficar-de-olho",
+     "👀"),
     (r"olho|monitor|acompanh|observ", "ficar-de-olho", "\U0001F440"),
     (r"destaqu|melhor|craque|top\b|estrela", "destaque", "\U0001F31F"),
     (r"alerta|risco|perigo|cuidado|armadilha", "alerta", "\U0001F6A8"),
@@ -524,7 +526,10 @@ def apply_contextual_custom_emoji_roles(text: str) -> str:
     resultado = []
     for linha in text.splitlines():
         sem_tags = _strip_html_tags(linha).strip()
-        eh_titulo = "<b>" in linha.lower() and not sem_tags.startswith("-")
+        # subtitulo de verdade: linha curta em caixa alta. "FLAMENGO - Vem de tres SGs..."
+        # e topico de time, nao subtitulo, e recebe apenas o escudo.
+        eh_titulo = ("<b>" in linha.lower() and not sem_tags.startswith("-")
+                     and _looks_like_heading(sem_tags))
         if not eh_titulo or _line_already_has_emoji(linha):
             resultado.append(linha)
             continue
@@ -534,6 +539,49 @@ def apply_contextual_custom_emoji_roles(text: str) -> str:
         indentacao = linha[:len(linha) - len(linha.lstrip())]
         resultado.append(f"{indentacao}{marca} {linha.lstrip()}")
     return "\n".join(resultado)
+
+
+def _club_emoji_ids() -> set[str]:
+    times = {_normalize_emoji_role(nome) for nome in CARTOLA_TEAM_NAMES.values()}
+    with custom_emoji_lock:
+        return {entry['id'] for role, entry in custom_emoji_map.items() if role in times}
+
+
+def _is_team_topic(line: str, club_ids: set[str]) -> bool:
+    """Linha que abre um tópico de time: escudo (ou marcador) logo no começo."""
+    inicio = re.sub(r'^\s*-\s*', '', line).lstrip()
+    tag = re.match(r'<tg-emoji emoji-id="(\d+)"', inicio)
+    if tag:
+        return tag.group(1) in club_ids
+    marcador = CUSTOM_EMOJI_MARKER_PATTERN.match(inicio)
+    times = {_normalize_emoji_role(nome) for nome in CARTOLA_TEAM_NAMES.values()}
+    return bool(marcador and _normalize_emoji_role(marcador.group(1)) in times)
+
+
+def space_team_topics(text: str) -> str:
+    """Dá respiro à legenda: cada tópico de time começa depois de uma linha em branco, e o
+    subtítulo que abre a lista de times termina em ':'."""
+    if not text:
+        return text
+
+    club_ids = _club_emoji_ids()
+    saida: list[str] = []
+    for linha in text.splitlines():
+        anterior = saida[-1] if saida else ""
+        topico_de_time = _is_team_topic(linha, club_ids)
+        depois_de_time = bool(anterior.strip()) and _is_team_topic(anterior, club_ids)
+
+        if topico_de_time and anterior.strip():
+            texto_anterior = _strip_html_tags(anterior).strip()
+            # só o subtítulo que abre a lista ganha ":" (nunca o tópico de time anterior)
+            if (not depois_de_time and "<b>" in anterior.lower()
+                    and _looks_like_heading(texto_anterior) and not texto_anterior.endswith(":")):
+                saida[-1] = re.sub(r"</b>", ":</b>", anterior, count=1, flags=re.IGNORECASE)
+            saida.append("")
+        elif depois_de_time and linha.strip():
+            saida.append("")          # fecha a lista de times antes do próximo bullet
+        saida.append(linha)
+    return "\n".join(saida)
 
 
 def cleanup_emoji_markers(text: str) -> str:
@@ -1490,6 +1538,8 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - Use subtitulos funcionais em CAIXA ALTA quando ajudarem a entender os blocos, mas evite cara de slide, apostila ou relatorio.
 - Quando o assunto for um confronto, use como titulo: [[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>. Os nomes ficam sempre em negrito e CAIXA ALTA.
 - Quando estiver elencando times em topicos, cada topico deve comecar com o marcador do escudo seguido imediatamente de <b>NOME DO TIME</b> em CAIXA ALTA: [[emoji:time]] <b>TIME</b>.
+- Separe os topicos de time por uma linha em branco, para a legenda respirar no celular.
+- O subtitulo que abre uma lista de times termina em dois-pontos.
 - Nunca use o escudo de um time como decoracao generica nem associe um escudo ao adversario errado.
 - Use emojis com parcimonia: 1 no titulo e no maximo 1 ou 2 em subtitulos realmente importantes. Em ambos, o emoji vem antes do <b>.
 - Nunca comece bullets com emoji, exceto o escudo de um time citado no comeco da frase. Bullet usa apenas "-"; o destaque visual fica no <b>, <i> e na frase.
@@ -2021,6 +2071,7 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         legend = apply_club_shields(legend)
         legend = apply_custom_emojis(legend)
         legend = cleanup_emoji_markers(legend)
+        legend = space_team_topics(legend)
         if not _strip_html_tags(legend).strip():
             raise UserFacingError(
                 "❌ A legenda ficou vazia após o processamento. Tente enviar o áudio novamente."
