@@ -57,10 +57,26 @@ No Render, vá para **Environment** e adicione:
 | `OPENAI_NAMES_MODEL` | Opcional. Padrão: `gpt-4.1-mini` |
 | `OPENAI_CAPTION_MODEL` | Opcional. Padrão: `gpt-4.1` |
 | `OPENAI_TEXT_MODEL` | Opcional. Compatibilidade legada. Se definido, vira fallback para nomes/legenda |
+| `CUSTOM_EMOJIS_JSON` | Opcional. Backup JSON dos emojis Premium para persistir entre deploys |
 
 ### Passo 5: Deploy
 
 Clique em "Create Web Service" e pronto! O bot vai estar rodando em segundos.
+
+## ✨ Emojis Premium do Telegram
+
+O dono configurado em `ALLOWED_USER_ID` pode cadastrar emojis Premium usados nas legendas:
+
+- `/emoji [emoji Premium] nome` — cadastra um ou vários emojis (um por linha);
+- `/emoji_importar` — ao responder a uma mensagem existente, importa toda a lista;
+- `/emojis` — mostra o cadastro atual;
+- `/emoji_remover nome` — remove um item;
+- `/emoji_exportar` — baixa o backup `custom_emojis.json`.
+
+No Render, o arquivo criado em execução pode ser perdido em um novo deploy. Para manter o
+cadastro, use o conteúdo do backup como valor de `CUSTOM_EMOJIS_JSON`. O uso dos emojis
+Premium depende das permissões do Telegram para o chat e da assinatura Premium ativa do
+dono do bot.
 
 ## 🧪 Teste Local (Opcional)
 

@@ -1,5 +1,7 @@
 .env
 .env.local
+custom_emojis.json
+custom_emojis.json.tmp
 *.pyc
 __pycache__/
 .DS_Store
