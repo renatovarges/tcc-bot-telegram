@@ -257,6 +257,53 @@ def get_custom_emoji_instruction() -> str:
     )
 
 
+def _normalize_role_search_text(text: str) -> str:
+    plain_text = html.unescape(_strip_html_tags(text or ''))
+    normalized = unicodedata.normalize('NFKD', plain_text)
+    normalized = ''.join(char for char in normalized if not unicodedata.combining(char))
+    normalized = re.sub(r'[^a-z0-9]+', ' ', normalized.lower())
+    return f" {' '.join(normalized.split())} "
+
+
+def apply_contextual_custom_emoji_roles(text: str) -> str:
+    """Marca títulos com o emoji Premium do único papel citado na linha."""
+    if not text:
+        return text
+
+    with custom_emoji_lock:
+        roles = sorted(custom_emoji_map, key=len, reverse=True)
+
+    if not roles:
+        return text
+
+    result: list[str] = []
+    for line in text.splitlines():
+        bold_index = line.lower().find('<b>')
+        if bold_index < 0:
+            result.append(line)
+            continue
+
+        prefix = line[:bold_index]
+        prefix_without_emoji = TITLE_EMOJI_PATTERN.sub('', prefix, count=1).strip()
+        if prefix_without_emoji:
+            result.append(line)
+            continue
+
+        searchable = _normalize_role_search_text(line)
+        matches = [
+            role for role in roles
+            if f" {role.replace('-', ' ')} " in searchable
+        ]
+        if len(matches) != 1:
+            result.append(line)
+            continue
+
+        indentation = line[:len(line) - len(line.lstrip())]
+        result.append(f"{indentation}[[emoji:{matches[0]}]] {line[bold_index:]}")
+
+    return '\n'.join(result)
+
+
 def _get_retry_delay(response: httpx.Response, attempt: int) -> float:
     retry_after = response.headers.get("retry-after")
     if retry_after:
@@ -1658,6 +1705,7 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         legend = sanitize_telegram_html(legend)
         legend = force_main_title_uppercase(legend)
         legend = reduce_excess_line_emojis(legend)
+        legend = apply_contextual_custom_emoji_roles(legend)
         legend = apply_custom_emojis(legend)
         logger.info(f"Legenda sanitizada para HTML Telegram ({len(legend)} chars)")
 
