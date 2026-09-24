@@ -73,10 +73,11 @@ O dono configurado em `ALLOWED_USER_ID` pode cadastrar emojis Premium usados nas
 - `/emoji_remover nome` — remove um item;
 - `/emoji_exportar` — baixa o backup `custom_emojis.json`.
 
-No Render, o arquivo criado em execução pode ser perdido em um novo deploy. Para manter o
-cadastro, use o conteúdo do backup como valor de `CUSTOM_EMOJIS_JSON`. O uso dos emojis
-Premium depende das permissões do Telegram para o chat e da assinatura Premium ativa do
-dono do bot.
+O projeto inclui `custom_emojis.default.json` como cadastro padrão permanente. Cadastros feitos
+em execução podem ser perdidos em um novo deploy do Render; para sobrescrever ou ampliar o
+padrão sem novo commit, use o conteúdo do backup como valor de `CUSTOM_EMOJIS_JSON`. O uso
+dos emojis Premium depende das permissões do Telegram para o chat e da assinatura Premium
+ativa do dono do bot.
 
 ## 🧪 Teste Local (Opcional)
 

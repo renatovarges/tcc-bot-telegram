@@ -45,6 +45,10 @@ OPENAI_NAMES_MODEL = os.getenv('OPENAI_NAMES_MODEL', LEGACY_OPENAI_TEXT_MODEL or
 OPENAI_CAPTION_MODEL = os.getenv('OPENAI_CAPTION_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-5.6-sol')
 OPENAI_AUDIO_SIZE_LIMIT_BYTES = 25 * 1024 * 1024
 CUSTOM_EMOJI_MAP_FILE = os.getenv('CUSTOM_EMOJI_MAP_FILE', 'custom_emojis.json')
+DEFAULT_CUSTOM_EMOJI_MAP_FILE = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    'custom_emojis.default.json',
+)
 CUSTOM_EMOJIS_JSON = os.getenv('CUSTOM_EMOJIS_JSON', '').strip()
 SUPPORTED_TRANSCRIPTION_EXTENSIONS = {
     ".flac",
@@ -134,6 +138,14 @@ def _validate_custom_emoji_map(data) -> dict[str, dict[str, str]]:
 
 def load_custom_emoji_map() -> None:
     loaded: dict[str, dict[str, str]] = {}
+
+    try:
+        with open(DEFAULT_CUSTOM_EMOJI_MAP_FILE, 'r', encoding='utf-8') as emoji_file:
+            loaded.update(_validate_custom_emoji_map(json.load(emoji_file)))
+    except FileNotFoundError:
+        pass
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        logger.error('Nao foi possivel carregar %s: %s', DEFAULT_CUSTOM_EMOJI_MAP_FILE, exc)
 
     if CUSTOM_EMOJIS_JSON:
         try:
