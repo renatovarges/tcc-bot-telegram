@@ -13,13 +13,15 @@ import asyncio
 import threading
 import time
 import html
+import json
 import re
 import mimetypes
+import unicodedata
 from dataclasses import dataclass
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import httpx
 from dotenv import load_dotenv
-from telegram import Update
+from telegram import Message, Update
 from telegram.error import TimedOut
 from telegram.ext import Application, MessageHandler, CommandHandler, filters, ContextTypes
 
@@ -42,6 +44,8 @@ OPENAI_TRANSCRIPTION_MODEL = os.getenv('OPENAI_TRANSCRIPTION_MODEL', 'gpt-transc
 OPENAI_NAMES_MODEL = os.getenv('OPENAI_NAMES_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-5.6-terra')
 OPENAI_CAPTION_MODEL = os.getenv('OPENAI_CAPTION_MODEL', LEGACY_OPENAI_TEXT_MODEL or 'gpt-5.6-sol')
 OPENAI_AUDIO_SIZE_LIMIT_BYTES = 25 * 1024 * 1024
+CUSTOM_EMOJI_MAP_FILE = os.getenv('CUSTOM_EMOJI_MAP_FILE', 'custom_emojis.json')
+CUSTOM_EMOJIS_JSON = os.getenv('CUSTOM_EMOJIS_JSON', '').strip()
 SUPPORTED_TRANSCRIPTION_EXTENSIONS = {
     ".flac",
     ".m4a",
@@ -88,6 +92,9 @@ BULLET_LEADING_EMOJI_PATTERN = re.compile(
 TITLE_EDGE_CLEANUP_PATTERN = re.compile(r"^[\s\-:;|\u2022\u2013\u2014]+|[\s\-:;|\u2022\u2013\u2014]+$")
 DEFAULT_TITLE_EMOJI = "\U0001F4CC"
 MAX_HEADING_EMOJIS = 3
+CUSTOM_EMOJI_ROLE_PATTERN = re.compile(r'[^a-z0-9]+')
+custom_emoji_map: dict[str, dict[str, str]] = {}
+custom_emoji_lock = threading.Lock()
 
 
 @dataclass(frozen=True)
@@ -98,6 +105,156 @@ class LegendProfile:
     max_bullets: int
     generation_tokens: int
     compaction_tokens: int
+
+
+def _normalize_emoji_role(role: str) -> str:
+    normalized = unicodedata.normalize('NFKD', role or '')
+    normalized = ''.join(char for char in normalized if not unicodedata.combining(char))
+    normalized = CUSTOM_EMOJI_ROLE_PATTERN.sub('-', normalized.lower()).strip('-')
+    return normalized[:80]
+
+
+def _validate_custom_emoji_map(data) -> dict[str, dict[str, str]]:
+    if not isinstance(data, dict):
+        raise ValueError('o mapa precisa ser um objeto JSON')
+
+    validated: dict[str, dict[str, str]] = {}
+    for raw_role, raw_entry in data.items():
+        role = _normalize_emoji_role(str(raw_role))
+        if not role or not isinstance(raw_entry, dict):
+            continue
+
+        emoji_id = str(raw_entry.get('id') or raw_entry.get('custom_emoji_id') or '').strip()
+        fallback = str(raw_entry.get('emoji') or raw_entry.get('fallback') or '').strip()
+        if emoji_id.isdigit() and fallback:
+            validated[role] = {'id': emoji_id, 'emoji': fallback}
+
+    return validated
+
+
+def load_custom_emoji_map() -> None:
+    loaded: dict[str, dict[str, str]] = {}
+
+    if CUSTOM_EMOJIS_JSON:
+        try:
+            loaded.update(_validate_custom_emoji_map(json.loads(CUSTOM_EMOJIS_JSON)))
+        except (ValueError, json.JSONDecodeError) as exc:
+            logger.error('CUSTOM_EMOJIS_JSON invalido: %s', exc)
+
+    try:
+        with open(CUSTOM_EMOJI_MAP_FILE, 'r', encoding='utf-8') as emoji_file:
+            loaded.update(_validate_custom_emoji_map(json.load(emoji_file)))
+    except FileNotFoundError:
+        pass
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        logger.error('Nao foi possivel carregar %s: %s', CUSTOM_EMOJI_MAP_FILE, exc)
+
+    with custom_emoji_lock:
+        custom_emoji_map.clear()
+        custom_emoji_map.update(loaded)
+
+    logger.info('Emojis Premium carregados: %s', len(loaded))
+
+
+def save_custom_emoji_map() -> None:
+    with custom_emoji_lock:
+        serialized = json.dumps(custom_emoji_map, ensure_ascii=False, indent=2, sort_keys=True)
+
+    temporary_path = f'{CUSTOM_EMOJI_MAP_FILE}.tmp'
+    with open(temporary_path, 'w', encoding='utf-8') as emoji_file:
+        emoji_file.write(serialized)
+        emoji_file.write('\n')
+    os.replace(temporary_path, CUSTOM_EMOJI_MAP_FILE)
+
+
+def _utf16_slice(text: str, offset: int, length: int | None = None) -> str:
+    data = (text or '').encode('utf-16-le')
+    start = max(offset, 0) * 2
+    end = None if length is None else start + max(length, 0) * 2
+    return data[start:end].decode('utf-16-le', errors='ignore')
+
+
+def _extract_custom_emoji_entries(message: Message) -> list[tuple[str, str, str]]:
+    text = message.text or message.caption or ''
+    entities = message.entities or message.caption_entities or ()
+    entries: list[tuple[str, str, str]] = []
+
+    for entity in entities:
+        if entity.type != 'custom_emoji' or not entity.custom_emoji_id:
+            continue
+
+        fallback = _utf16_slice(text, entity.offset, entity.length).strip()
+        remainder = _utf16_slice(text, entity.offset + entity.length)
+        role_text = remainder.splitlines()[0] if remainder else ''
+        role_text = re.sub(r'^[\s:;|=\-–—]+', '', role_text).strip()
+        role = _normalize_emoji_role(role_text)
+        if fallback and role:
+            entries.append((role, str(entity.custom_emoji_id), fallback))
+
+    return entries
+
+
+def apply_custom_emojis(text: str) -> str:
+    if not text:
+        return text
+
+    with custom_emoji_lock:
+        role_entries = dict(custom_emoji_map)
+        fallback_ids: dict[str, set[str]] = {}
+        for entry in custom_emoji_map.values():
+            fallback_ids.setdefault(entry['emoji'], set()).add(entry['id'])
+        by_fallback = {
+            fallback: next(iter(emoji_ids))
+            for fallback, emoji_ids in fallback_ids.items()
+            if len(emoji_ids) == 1
+        }
+        replacements = sorted(
+            by_fallback.items(),
+            key=lambda item: len(item[0]),
+            reverse=True,
+        )
+
+    if not replacements:
+        return text
+
+    parts = re.split(r'(<[^>]+>)', text)
+    inside_custom_emoji = False
+    for index, part in enumerate(parts):
+        lowered = part.lower()
+        if lowered.startswith('<tg-emoji'):
+            inside_custom_emoji = True
+            continue
+        if lowered.startswith('</tg-emoji'):
+            inside_custom_emoji = False
+            continue
+        if part.startswith('<') or inside_custom_emoji:
+            continue
+
+        for fallback, emoji_id in replacements:
+            tag = f'<tg-emoji emoji-id="{emoji_id}">{fallback}</tg-emoji>'
+            part = part.replace(fallback, tag)
+        for role, entry in role_entries.items():
+            token = f'[[emoji:{role}]]'
+            tag = f'<tg-emoji emoji-id="{entry["id"]}">{entry["emoji"]}</tg-emoji>'
+            part = re.sub(re.escape(token), lambda _: tag, part, flags=re.IGNORECASE)
+        parts[index] = part
+
+    return ''.join(parts)
+
+
+def get_custom_emoji_instruction() -> str:
+    with custom_emoji_lock:
+        roles = sorted(custom_emoji_map)
+
+    if not roles:
+        return ''
+
+    return (
+        "Emojis Premium disponiveis por papel: " + ", ".join(roles) + ". "
+        "Quando um desses papeis combinar diretamente com o assunto, voce pode usar o marcador "
+        "[[emoji:papel]] no lugar de um emoji comum. Use exatamente um papel da lista, preserve o marcador "
+        "literalmente e mantenha o criterio de usar poucos emojis. Nao use um escudo de time para outro time."
+    )
 
 
 def _get_retry_delay(response: httpx.Response, attempt: int) -> float:
@@ -1039,6 +1196,7 @@ Sua tarefa e devolver a MESMA legenda, alterando apenas o que for necessario par
 
 Regras:
 - Preserve a estrutura, os subtitulos, os emojis, o tom e o HTML da legenda.
+- Preserve literalmente marcadores no formato [[emoji:papel]]; nao altere nem traduza o papel.
 - Corrija apenas nomes e trechos diretamente ligados a nomes.
 - Se a legenda mencionar um nome que nao aparece de forma sustentada pela transcricao, substitua pelo nome correto da transcricao.
 - Se nao houver nome correto claro na transcricao, remova apenas o fragmento problemático sem reescrever o restante.
@@ -1059,6 +1217,7 @@ Regras:
 - Preserve o titulo principal, o tom humano e a organizacao por blocos.
 - Preserve nomes de jogadores, tecnicos e times exatamente como aparecem.
 - Preserve ou recoloque 1 emoji no titulo e no maximo 1 ou 2 emojis em subtitulos quando isso ajudar a leitura.
+- Preserve literalmente marcadores no formato [[emoji:papel]] que ja estiverem na legenda.
 - O emoji de titulo e subtitulo deve vir antes do <b>, nunca depois do texto.
 - Nunca comece bullets com emoji. Bullet usa apenas "-".
 - Siga o orcamento informado pelo usuario. Fique abaixo do limite superior, mas nao esprema a ponto de perder ideias centrais.
@@ -1146,6 +1305,7 @@ def generate_legend(transcript: str) -> str:
                     "Organize a legenda por blocos de assunto, sem seguir obrigatoriamente a ordem cronologica do audio. "
                     "Priorize limpeza visual e economia de texto, mas nao corte conclusoes ou ressalvas que mudam a ideia.\n\n"
                     f"{get_legend_budget_instruction(transcript)}\n\n"
+                    f"{get_custom_emoji_instruction()}\n\n"
                     f"Transcricao do audio:\n\n{transcript}"
                 )
             }
@@ -1268,6 +1428,152 @@ async def _telegram_call_with_retry(coro_factory, *, action_name: str, attempts:
             await asyncio.sleep(delay)
 
 
+async def _require_allowed_user(update: Update) -> bool:
+    message = update.effective_message
+    user = update.effective_user
+    if not message or not user or user.id != ALLOWED_USER_ID:
+        if message:
+            await message.reply_text("❌ Sem permissão.")
+        return False
+    return True
+
+
+async def register_custom_emojis(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not await _require_allowed_user(update):
+        return
+
+    message = update.effective_message
+    entries = _extract_custom_emoji_entries(message)
+    if not entries:
+        await message.reply_text(
+            "❌ Não encontrei emojis Premium com um nome ao lado.\n\n"
+            "Use uma linha por emoji:\n"
+            "/emoji [emoji Premium] nome\n\n"
+            "Para importar uma lista existente, responda à lista com /emoji_importar."
+        )
+        return
+
+    with custom_emoji_lock:
+        for role, emoji_id, fallback in entries:
+            custom_emoji_map[role] = {'id': emoji_id, 'emoji': fallback}
+
+    try:
+        save_custom_emoji_map()
+    except OSError as exc:
+        logger.error('Falha ao salvar emojis Premium: %s', exc)
+        await message.reply_text("❌ Capturei os emojis, mas não consegui salvar o cadastro.")
+        return
+
+    await message.reply_text(
+        f"✅ {len(entries)} emoji(s) Premium cadastrado(s).",
+    )
+
+
+async def import_custom_emojis(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not await _require_allowed_user(update):
+        return
+
+    message = update.effective_message
+    source_message = message.reply_to_message
+    if not source_message:
+        await message.reply_text(
+            "❌ Responda à mensagem que contém a lista de emojis usando /emoji_importar."
+        )
+        return
+
+    entries = _extract_custom_emoji_entries(source_message)
+    if not entries:
+        await message.reply_text(
+            "❌ A mensagem respondida não contém emojis Premium reconhecíveis com nomes ao lado."
+        )
+        return
+
+    with custom_emoji_lock:
+        for role, emoji_id, fallback in entries:
+            custom_emoji_map[role] = {'id': emoji_id, 'emoji': fallback}
+
+    try:
+        save_custom_emoji_map()
+    except OSError as exc:
+        logger.error('Falha ao salvar importacao de emojis Premium: %s', exc)
+        await message.reply_text("❌ Li a lista, mas não consegui salvar o cadastro.")
+        return
+
+    await message.reply_text(
+        f"✅ Importação concluída: {len(entries)} emoji(s) Premium cadastrado(s)."
+    )
+
+
+async def list_custom_emojis(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not await _require_allowed_user(update):
+        return
+
+    message = update.effective_message
+    with custom_emoji_lock:
+        entries = sorted(custom_emoji_map.items())
+
+    if not entries:
+        await message.reply_text("Nenhum emoji Premium cadastrado.")
+        return
+
+    lines = ["<b>EMOJIS PREMIUM CADASTRADOS</b>", ""]
+    for role, entry in entries:
+        safe_role = html.escape(role.replace('-', ' '), quote=False)
+        lines.append(
+            f'<tg-emoji emoji-id="{entry["id"]}">{entry["emoji"]}</tg-emoji> {safe_role}'
+        )
+    await message.reply_text("\n".join(lines), parse_mode='HTML')
+
+
+async def remove_custom_emoji(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not await _require_allowed_user(update):
+        return
+
+    message = update.effective_message
+    role = _normalize_emoji_role(' '.join(context.args))
+    if not role:
+        await message.reply_text("Use: /emoji_remover nome")
+        return
+
+    with custom_emoji_lock:
+        removed = custom_emoji_map.pop(role, None)
+
+    if not removed:
+        await message.reply_text("❌ Não encontrei esse nome no cadastro.")
+        return
+
+    try:
+        save_custom_emoji_map()
+    except OSError as exc:
+        logger.error('Falha ao salvar remocao de emoji Premium: %s', exc)
+        with custom_emoji_lock:
+            custom_emoji_map[role] = removed
+        await message.reply_text("❌ Não consegui salvar a remoção.")
+        return
+
+    await message.reply_text(f"✅ Emoji removido: {role.replace('-', ' ')}")
+
+
+async def export_custom_emojis(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not await _require_allowed_user(update):
+        return
+
+    message = update.effective_message
+    with custom_emoji_lock:
+        payload = json.dumps(custom_emoji_map, ensure_ascii=False, indent=2, sort_keys=True)
+
+    export_file = io.BytesIO(payload.encode('utf-8'))
+    export_file.name = 'custom_emojis.json'
+    await message.reply_document(
+        document=export_file,
+        filename='custom_emojis.json',
+        caption=(
+            "Backup dos emojis Premium. No Render, o conteúdo também pode ser salvo "
+            "na variável CUSTOM_EMOJIS_JSON para sobreviver a novos deploys."
+        ),
+    )
+
+
 async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     user_id = update.message.from_user.id
     logger.info(f"Mensagem recebida de user_id={user_id}")
@@ -1352,6 +1658,7 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
         legend = sanitize_telegram_html(legend)
         legend = force_main_title_uppercase(legend)
         legend = reduce_excess_line_emojis(legend)
+        legend = apply_custom_emojis(legend)
         logger.info(f"Legenda sanitizada para HTML Telegram ({len(legend)} chars)")
 
         await processing_msg.edit_text(legend, parse_mode='HTML')
@@ -1382,7 +1689,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         await update.message.reply_text("❌ Sem permissão.")
         return
     await update.message.reply_text(
-        "🎙️ Bot de Legendagem TCC ativo!\n\nEnvie um áudio e aguarde a legenda."
+        "🎙️ Bot de Legendagem TCC ativo!\n\n"
+        "Envie um áudio e aguarde a legenda.\n\n"
+        "Emojis Premium:\n"
+        "• /emoji [emoji] nome — cadastrar\n"
+        "• /emoji_importar — responder a uma lista existente\n"
+        "• /emojis — listar\n"
+        "• /emoji_remover nome — remover\n"
+        "• /emoji_exportar — baixar backup"
     )
 
 
@@ -1397,6 +1711,7 @@ async def run_bot():
         raise ValueError("ALLOWED_USER_ID não configurado")
 
     logger.info(f"Iniciando bot | ALLOWED_USER_ID={ALLOWED_USER_ID}")
+    load_custom_emoji_map()
 
     app = (
         Application.builder()
@@ -1408,6 +1723,11 @@ async def run_bot():
         .build()
     )
     app.add_handler(CommandHandler("start", start))
+    app.add_handler(CommandHandler("emoji", register_custom_emojis))
+    app.add_handler(CommandHandler("emoji_importar", import_custom_emojis))
+    app.add_handler(CommandHandler("emojis", list_custom_emojis))
+    app.add_handler(CommandHandler("emoji_remover", remove_custom_emoji))
+    app.add_handler(CommandHandler("emoji_exportar", export_custom_emojis))
     app.add_handler(MessageHandler(filters.VOICE | filters.AUDIO, process_audio_message))
 
     await app.initialize()
