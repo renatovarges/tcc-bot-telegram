@@ -16,7 +16,7 @@ import logging
 import re
 from dataclasses import dataclass, field
 
-from telegram import LinkPreviewOptions, Message, Update
+from telegram import LinkPreviewOptions, Message, MessageEntity, Update
 from telegram.constants import ParseMode
 from telegram.error import BadRequest, TelegramError
 from telegram.ext import Application, CommandHandler, ContextTypes, MessageHandler, filters
@@ -45,8 +45,9 @@ HELP_TEXT = (
     "/publicar — posta o índice atualizado no canal\n"
     "/adicionar LINK NOME — inclui um post pelo link\n"
     "/remover 3 — tira o item 3\n"
-    "/renomear 3 NOVO NOME — troca o nome do item 3\n\n"
-    "Nome começando com ▶️ ganha o ícone de vídeo no índice."
+    "/renomear 3 NOVO NOME — troca o nome do item 3\n"
+    "/emoji_youtube [emoji] — cadastra o emoji premium do YouTube\n\n"
+    "Post com link do YouTube (ou nome começando com ▶️) ganha o ícone do YouTube no índice."
 )
 
 
@@ -63,6 +64,8 @@ class IndexState:
     channel_id: int | None = None
     channel_username: str | None = None
     items: dict[int, IndexItem] = field(default_factory=dict)
+    youtube_emoji_id: str | None = None
+    youtube_emoji_fallback: str = "▶️"
     memory_message_id: int | None = None
 
     def sorted_items(self) -> list[IndexItem]:
@@ -118,16 +121,24 @@ def post_link(state: IndexState, message_id: int) -> str:
     return f"https://t.me/c/{internal_id}/{message_id}"
 
 
-def render_index(state: IndexState, *, numbered: bool = False) -> str:
+def youtube_marker(state: IndexState, *, premium: bool = True) -> str:
+    if premium and state.youtube_emoji_id:
+        return (f'<tg-emoji emoji-id="{state.youtube_emoji_id}">'
+                f'{html.escape(state.youtube_emoji_fallback)}</tg-emoji>')
+    return "▶️"
+
+
+def render_index(state: IndexState, *, numbered: bool = False, premium: bool = True) -> str:
     title = f"ÍNDICE RODADA {state.rodada}" if state.rodada else "ÍNDICE"
     lines = [f"<b><i>{html.escape(title)}</i></b>", ""]
     for position, item in enumerate(state.sorted_items(), start=1):
         if numbered:
             marker = f"{position}."
         else:
-            marker = "▶️" if item.youtube else "-"
+            marker = youtube_marker(state, premium=premium) if item.youtube else "-"
         link = html.escape(post_link(state, item.message_id))
-        lines.append(f'{marker} <a href="{link}"><i>{html.escape(item.title)}</i></a>')
+        # padrão do canal: nome do bloco em negrito e CAIXA ALTA
+        lines.append(f'{marker} <a href="{link}"><b>{html.escape(item.title)}</b></a>')
     return "\n".join(lines)
 
 
@@ -136,6 +147,7 @@ def render_memory(state: IndexState) -> str:
         MEMORY_HEADER,
         f"rodada: {state.rodada}",
         f"canal: {state.channel_id or ''} {state.channel_username or '-'}",
+        f"youtube: {state.youtube_emoji_id or '-'} {state.youtube_emoji_fallback}",
         "---",
     ]
     for item in state.sorted_items():
@@ -154,6 +166,12 @@ def parse_memory(text: str) -> IndexState:
                 state.channel_id = int(parts[0])
             if len(parts) > 1 and parts[1] != '-':
                 state.channel_username = parts[1]
+        elif line.startswith('youtube:'):
+            parts = line.split(':', 1)[1].split()
+            if parts and parts[0].isdigit():
+                state.youtube_emoji_id = parts[0]
+            if len(parts) > 1:
+                state.youtube_emoji_fallback = parts[1]
         else:
             match = MEMORY_ITEM_PATTERN.match(line)
             if match:
@@ -292,6 +310,33 @@ async def cmd_indice(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     )
 
 
+async def _send_index(context: ContextTypes.DEFAULT_TYPE, state: IndexState, *, premium: bool) -> Message:
+    return await context.bot.send_message(
+        state.channel_id,
+        render_index(state, premium=premium),
+        parse_mode=ParseMode.HTML,
+        link_preview_options=LinkPreviewOptions(is_disabled=True),
+    )
+
+
+async def cmd_emoji_youtube(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Cadastra o emoji premium do YouTube: o comando vem junto com o emoji na mesma mensagem."""
+    message = update.effective_message
+    emojis = message.parse_entities([MessageEntity.CUSTOM_EMOJI])
+    if not emojis:
+        await message.reply_text(
+            "Mande o comando junto com o emoji premium do YouTube, na mesma mensagem:\n"
+            "/emoji_youtube [emoji]")
+        return
+    entity, fallback = next(iter(emojis.items()))
+    state = _state(context)
+    state.youtube_emoji_id = entity.custom_emoji_id
+    state.youtube_emoji_fallback = fallback or "▶️"
+    await _save_and_report(
+        context,
+        f'✅ Emoji do YouTube cadastrado: {youtube_marker(state)} — ele marca os itens com link do YouTube.')
+
+
 async def cmd_publicar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     state = _state(context)
     if not state.items:
@@ -302,13 +347,17 @@ async def cmd_publicar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             "Ainda não sei qual é o canal. Marque um post com #TCC ou use /adicionar com um link.")
         return
 
+    aviso = ""
     try:
-        published = await context.bot.send_message(
-            state.channel_id,
-            render_index(state),
-            parse_mode=ParseMode.HTML,
-            link_preview_options=LinkPreviewOptions(is_disabled=True),
-        )
+        try:
+            published = await _send_index(context, state, premium=True)
+        except BadRequest as exc:
+            if not state.youtube_emoji_id:
+                raise
+            # o Telegram pode não deixar robô usar emoji premium no canal: publica com ▶️
+            logger.warning("Índice: emoji premium recusado no canal, usando ▶️: %s", exc)
+            published = await _send_index(context, state, premium=False)
+            aviso = "\n\n⚠️ O Telegram não deixou o robô usar o emoji premium do YouTube no canal; saiu ▶️."
     except TelegramError as exc:
         logger.error("Índice: falha ao publicar no canal: %s", exc)
         await update.effective_message.reply_text(
@@ -318,7 +367,7 @@ async def cmd_publicar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
 
     link = html.escape(post_link(state, published.message_id))
     await update.effective_message.reply_text(
-        f'✅ <a href="{link}">Índice publicado</a> no canal com {len(state.items)} itens.',
+        f'✅ <a href="{link}">Índice publicado</a> no canal com {len(state.items)} itens.{aviso}',
         parse_mode=ParseMode.HTML,
         link_preview_options=LinkPreviewOptions(is_disabled=True),
     )
@@ -422,6 +471,7 @@ async def start_index_bot(token: str, owner_id: int) -> Application:
     app.add_handler(CommandHandler("adicionar", cmd_adicionar, filters=dono))
     app.add_handler(CommandHandler("remover", cmd_remover, filters=dono))
     app.add_handler(CommandHandler("renomear", cmd_renomear, filters=dono))
+    app.add_handler(CommandHandler("emoji_youtube", cmd_emoji_youtube, filters=dono))
 
     await app.initialize()
     app.bot_data['owner_id'] = owner_id
