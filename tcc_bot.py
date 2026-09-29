@@ -104,7 +104,12 @@ CUSTOM_EMOJI_MARKER_PATTERN = re.compile(r'\[\[emoji:([a-z0-9-]+)\]\]', re.IGNOR
 MATCH_CONTEXT_PATTERN = re.compile(
     r'\b(?:confronto|jogo|partida|duelo|enfrenta|recebe|favorit\w*|mandante|visitante)\b'
 )
-TEAM_CONNECTOR_PATTERN = re.compile(r'^\s*(?:e|x|vs|versus|contra)\s*$')
+# o que liga os dois times quando o locutor anuncia o jogo: "Flu x Coxa", "Flu contra o Coxa",
+# "Flu recebe o Coxa", "jogo do Flu com o Coxa"
+MATCHUP_CONNECTOR_PATTERN = re.compile(
+    r'^(?:e|x|vs|versus|contra|com|diante|recebe|enfrenta|encara|pega|visita)'
+    r'(?: (?:o|a|do|da|de|ao))?$'
+)
 
 # Assunto da linha -> (papel Premium preferido, emoji comum de reserva).
 # A ordem importa: o primeiro padrão que casar vence, então o mais específico vem antes.
@@ -368,11 +373,12 @@ def get_custom_emoji_instruction() -> str:
         "EMOJIS DO CANAL (marcadores obrigatorios)\n"
         "- Escreva o marcador [[emoji:papel]] e nada mais: o bot troca pelo emoji certo.\n"
         "- TODO titulo e TODO subtitulo comecam com um marcador, antes do <b>.\n"
-        "- Escudo de time aparece SOMENTE no titulo de um confronto ou no inicio de um subtitulo "
-        "dedicado exclusivamente ao time. Nunca use escudo em bullets nem em mencoes no corpo.\n"
-        "- Confronto do Brasileiro: [[emoji:brasileirao]] <b>BRASILEIRAO 2026</b> — "
-        "[[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>.\n"
-        "- Nunca use escudo de time como enfeite nem troque o escudo do adversario.\n"
+        "- Confronto do Brasileiro: o titulo ocupa DUAS linhas:\n"
+        "  [[emoji:brasileirao]] <b>BRASILEIRAO 2026</b>\n"
+        "  [[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>\n"
+        "- Fora do titulo do confronto, NAO escreva marcador de escudo de time: o bot coloca o "
+        "escudo sozinho no comeco do paragrafo cujo assunto e aquele time. Para isso, quando o "
+        "paragrafo for sobre um time, comece a frase pelo time (\"- O <b>Fluminense</b> ...\").\n"
         "- Fora isso, no maximo 1 emoji por bloco: a legenda nao pode virar carnaval de icones.\n"
         "- Se nenhum papel servir, escreva um emoji comum adequado ao assunto.\n"
         f"- Papeis de time: {', '.join(times)}.\n"
@@ -452,37 +458,110 @@ def _normalize_plain_search_text(text: str) -> str:
     return ' '.join(normalized.split())
 
 
-def detect_matchup_from_transcript(transcript: str) -> tuple[str, str] | None:
-    """Detecta dois times apresentados como confronto no começo do áudio."""
-    intro = _normalize_plain_search_text(transcript)[:800]
-    opening = intro[:400]
-    if not MATCH_CONTEXT_PATTERN.search(intro):
-        return None
+def _team_roles() -> set[str]:
+    return {_normalize_emoji_role(nome) for nome in CARTOLA_TEAM_NAMES.values()}
 
-    mentions_by_role: dict[str, tuple[int, int]] = {}
+
+def _strip_accents(text: str) -> str:
+    normalized = unicodedata.normalize('NFKD', text or '')
+    return ''.join(char for char in normalized if not unicodedata.combining(char))
+
+
+def _team_mentions(text: str) -> list[tuple[int, int, str]]:
+    """[(inicio, fim, papel)] de cada time citado no texto, sem sobreposição e em ordem.
+
+    Nomes que também são palavras comuns ("vitória", "santos") só contam com inicial maiúscula.
+    """
+    plain = _strip_accents(text)
+    candidatos = []
     for variant, role in _club_variants():
-        alias = _normalize_plain_search_text(variant)
-        if not alias:
+        alias = _strip_accents(variant)
+        for match in re.finditer(rf'(?<![\w-]){re.escape(alias)}(?![\w-])', plain, re.IGNORECASE):
+            if role in CLUB_AMBIGUOUS and not match.group(0)[:1].isupper():
+                continue
+            candidatos.append((match.start(), match.end(), role))
+
+    # "Atlético Paranaense" vence "Atlético" quando os dois casam no mesmo trecho
+    candidatos.sort(key=lambda item: (item[0], -(item[1] - item[0])))
+    mencoes: list[tuple[int, int, str]] = []
+    for start, end, role in candidatos:
+        if mencoes and start < mencoes[-1][1]:
             continue
-        match = re.search(rf'(?<![a-z0-9]){re.escape(alias)}(?![a-z0-9])', opening)
-        if match and (role not in mentions_by_role or match.start() < mentions_by_role[role][0]):
-            mentions_by_role[role] = (match.start(), match.end())
+        mencoes.append((start, end, role))
+    return mencoes
 
-    mentions = sorted(
-        (start, end, role) for role, (start, end) in mentions_by_role.items()
-    )
-    if len(mentions) != 2:
+
+def detect_matchup_from_transcript(transcript: str) -> tuple[str, str] | None:
+    """Confronto anunciado no começo do áudio: "Fluminense contra o Coxa", "jogo do Flu com o
+    Coxa", "Fluminense e Coritiba"... Outros times citados depois não atrapalham."""
+    opening = (transcript or '')[:400]
+    contexto = _normalize_plain_search_text((transcript or '')[:800])
+    mencoes = _team_mentions(opening)
+    for (_, fim, primeiro), (inicio, _, segundo) in zip(mencoes, mencoes[1:]):
+        if primeiro == segundo:
+            continue
+        conector = _normalize_plain_search_text(opening[fim:inicio])
+        if len(conector) > 20 or not MATCHUP_CONNECTOR_PATTERN.match(conector):
+            continue
+        # "Flamengo e Palmeiras venceram" é lista, não confronto: o "e" exige contexto de jogo
+        if conector.split()[0] == 'e' and not MATCH_CONTEXT_PATTERN.search(contexto):
+            continue
+        return primeiro, segundo
+    return None
+
+
+def _leading_content_lines(text: str, limit: int = 2) -> list[int]:
+    return [index for index, line in enumerate(text.splitlines()) if line.strip()][:limit]
+
+
+def detect_matchup_from_legend(text: str) -> tuple[str, str] | None:
+    """Confronto que o próprio modelo reconheceu e escreveu no título da legenda."""
+    lines = text.splitlines()
+    indices = _leading_content_lines(text)
+    if not indices:
         return None
 
-    first, second = mentions
-    connector = opening[first[1]:second[0]]
-    if len(connector) > 30 or not TEAM_CONNECTOR_PATTERN.match(connector):
-        return None
-    return first[2], second[2]
+    def _roles(line: str) -> list[str]:
+        marcados = [_normalize_emoji_role(m.group(1)) for m in CUSTOM_EMOJI_MARKER_PATTERN.finditer(line)]
+        citados = [role for _, _, role in _team_mentions(
+            html.unescape(_strip_html_tags(CUSTOM_EMOJI_MARKER_PATTERN.sub(' ', line))))]
+        ordem: list[str] = []
+        for role in citados + marcados:
+            if role in _team_roles() and role not in ordem:
+                ordem.append(role)
+        return ordem
+
+    candidatas = [lines[indices[0]]]
+    # o modelo pode já ter escrito o cabeçalho em duas linhas (BRASILEIRÃO / TIME X TIME)
+    if len(indices) > 1 and 'brasileir' in _normalize_plain_search_text(lines[indices[0]]):
+        candidatas.append(lines[indices[1]])
+    for line in candidatas:
+        roles = _roles(line)
+        if len(roles) == 2:
+            return roles[0], roles[1]
+    return None
 
 
-def ensure_matchup_title(text: str, transcript: str) -> str:
-    matchup = detect_matchup_from_transcript(transcript)
+def detect_matchup(legend: str, transcript: str) -> tuple[str, str] | None:
+    return detect_matchup_from_legend(legend) or detect_matchup_from_transcript(transcript)
+
+
+def _is_matchup_title_line(line: str, matchup: tuple[str, str]) -> bool:
+    plain = _normalize_plain_search_text(CUSTOM_EMOJI_MARKER_PATTERN.sub(
+        lambda m: f' {m.group(1)} ', line))
+    if 'brasileir' in plain:
+        return True
+    citados = {role for _, _, role in _team_mentions(html.unescape(_strip_html_tags(line)))}
+    citados |= {_normalize_emoji_role(m.group(1)) for m in CUSTOM_EMOJI_MARKER_PATTERN.finditer(line)}
+    return set(matchup) <= citados
+
+
+def ensure_matchup_title(text: str, matchup: tuple[str, str] | None) -> str:
+    """Cabeçalho de confronto em duas linhas, com a logo do Brasileirão e os escudos:
+
+    [logo] BRASILEIRÃO 2026
+    [escudo] TIME 1 X [escudo] TIME 2
+    """
     if not text or not matchup:
         return text
 
@@ -494,17 +573,22 @@ def ensure_matchup_title(text: str, transcript: str) -> str:
     if first_role not in display_names or second_role not in display_names:
         return text
 
-    title = (
-        '[[emoji:brasileirao]] <b>BRASILEIRÃO 2026</b> — '
+    cabecalho = [
+        '[[emoji:brasileirao]] <b>BRASILEIRÃO 2026</b>',
         f'[[emoji:{first_role}]] <b>{display_names[first_role]}</b> X '
-        f'[[emoji:{second_role}]] <b>{display_names[second_role]}</b>'
-    )
+        f'[[emoji:{second_role}]] <b>{display_names[second_role]}</b>',
+    ]
     lines = text.splitlines()
-    first_content_index = next((index for index, line in enumerate(lines) if line.strip()), None)
-    if first_content_index is None:
-        return title
-    lines[first_content_index] = title
-    return '\n'.join(lines)
+    # o título que o modelo escreveu para o confronto sai; subtítulos de assunto e o corpo ficam
+    while lines:
+        if not lines[0].strip():
+            lines.pop(0)
+            continue
+        if _is_heading_line(lines[0]) and _is_matchup_title_line(lines[0], matchup):
+            lines.pop(0)
+            continue
+        break
+    return '\n'.join(cabecalho + [''] + lines)
 
 
 def _club_shield_pattern() -> tuple[re.Pattern[str], dict[str, str]]:
@@ -624,45 +708,91 @@ def apply_contextual_custom_emoji_roles(text: str) -> str:
     return "\n".join(resultado)
 
 
-def _club_emoji_ids() -> set[str]:
-    times = {_normalize_emoji_role(nome) for nome in CARTOLA_TEAM_NAMES.values()}
-    with custom_emoji_lock:
-        return {entry['id'] for role, entry in custom_emoji_map.items() if role in times}
+PARAGRAPH_SUBJECT_PATTERN = re.compile(r'^(?P<artigo>(?:o|a|os|as)\s+)?', re.IGNORECASE)
+SHARED_SUBJECT_PATTERN = re.compile(r'^\s*(?:e|x|vs|versus|contra)\s+(?:(?:o|a)\s+)?', re.IGNORECASE)
 
 
-def _is_team_topic(line: str, club_ids: set[str]) -> bool:
-    """Linha que abre um tópico de time: escudo (ou marcador) logo no começo."""
-    inicio = re.sub(r'^\s*-\s*', '', line).lstrip()
-    tag = re.match(r'<tg-emoji emoji-id="(\d+)"', inicio)
-    if tag:
-        return tag.group(1) in club_ids
-    marcador = CUSTOM_EMOJI_MARKER_PATTERN.match(inicio)
-    times = {_normalize_emoji_role(nome) for nome in CARTOLA_TEAM_NAMES.values()}
-    return bool(marcador and _normalize_emoji_role(marcador.group(1)) in times)
+def _paragraph_subject_team(texto: str) -> str | None:
+    """Time que é o sujeito do parágrafo: "O Fluminense briga pelo G4..." -> fluminense.
+
+    Times citados no meio da frase ("...para o Vasco") não contam, e parágrafo sobre os dois
+    times ao mesmo tempo ("Fluminense e Coxa fazem...") fica sem escudo.
+    """
+    plain = html.unescape(_strip_html_tags(texto)).lstrip()
+    artigo = PARAGRAPH_SUBJECT_PATTERN.match(plain)
+    inicio = artigo.end()
+    mencoes = _team_mentions(plain[inicio:inicio + 40])
+    if not mencoes or mencoes[0][0] != 0:
+        return None
+
+    _, fim, role = mencoes[0]
+    # "a vitória", "Júnior Santos": nome ambíguo só vale com "o" antes ou em negrito
+    if role in CLUB_AMBIGUOUS:
+        com_o = bool(artigo.group('artigo')) and artigo.group('artigo').strip().lower() in {'o', 'os'}
+        if not com_o and not texto.lstrip().lower().startswith('<b>'):
+            return None
+    resto = plain[inicio + fim:]
+    compartilhado = SHARED_SUBJECT_PATTERN.match(resto)
+    if compartilhado:
+        seguinte = _team_mentions(resto[compartilhado.end():compartilhado.end() + 40])
+        if seguinte and seguinte[0][0] == 0:
+            return None
+    return role
 
 
-def space_team_topics(text: str) -> str:
-    """Dá respiro à legenda: cada tópico de time começa depois de uma linha em branco, e o
-    subtítulo que abre a lista de times termina em ':'."""
+def apply_paragraph_shields(text: str) -> str:
+    """O escudo vira o marcador do parágrafo cujo assunto é um time, no lugar do "-"."""
     if not text:
         return text
 
-    club_ids = _club_emoji_ids()
-    saida: list[str] = []
-    for linha in text.splitlines():
-        anterior = saida[-1] if saida else ""
-        topico_de_time = _is_team_topic(linha, club_ids)
-        depois_de_time = bool(anterior.strip()) and _is_team_topic(anterior, club_ids)
+    with custom_emoji_lock:
+        cadastrados = set(custom_emoji_map)
 
-        if topico_de_time and anterior.strip():
-            texto_anterior = _strip_html_tags(anterior).strip()
-            # só o subtítulo que abre a lista ganha ":" (nunca o tópico de time anterior)
-            if (not depois_de_time and "<b>" in anterior.lower()
-                    and _looks_like_heading(texto_anterior) and not texto_anterior.endswith(":")):
-                saida[-1] = re.sub(r"</b>", ":</b>", anterior, count=1, flags=re.IGNORECASE)
-            saida.append("")
-        elif depois_de_time and linha.strip():
-            saida.append("")          # fecha a lista de times antes do próximo bullet
+    linhas = []
+    for linha in text.splitlines():
+        if not linha.strip() or _is_heading_line(linha):
+            linhas.append(linha)
+            continue
+        indentacao = linha[:len(linha) - len(linha.lstrip())]
+        corpo = re.sub(r'^\s*-\s*', '', linha)
+        role = _paragraph_subject_team(corpo)
+        if not role or role not in cadastrados:
+            linhas.append(linha)
+            continue
+        linhas.append(f"{indentacao}[[emoji:{role}]] {corpo}")
+    return "\n".join(linhas)
+
+
+def apply_breathing_room(text: str) -> str:
+    """Respiro no celular: linha em branco entre parágrafos e antes de cada subtítulo.
+
+    O cabeçalho de confronto (duas linhas) fica junto, e cada subtítulo fica colado no
+    primeiro parágrafo do seu bloco.
+    """
+    if not text:
+        return text
+
+    conteudo = [linha.rstrip() for linha in text.splitlines() if linha.strip()]
+    if not conteudo:
+        return text
+
+    fim_do_cabecalho = 0
+    if (len(conteudo) > 1 and 'brasileir' in _normalize_plain_search_text(_strip_html_tags(conteudo[0]))
+            and _is_heading_line(conteudo[1])
+            and len(_team_mentions(html.unescape(_strip_html_tags(conteudo[1])))) == 2):
+        fim_do_cabecalho = 1
+
+    saida: list[str] = []
+    for index, linha in enumerate(conteudo):
+        if index > 0:
+            dentro_do_cabecalho = index <= fim_do_cabecalho
+            subtitulo_e_primeiro_paragrafo = (
+                index - 1 > fim_do_cabecalho
+                and _is_heading_line(conteudo[index - 1])
+                and not _is_heading_line(linha)
+            )
+            if not dentro_do_cabecalho and not subtitulo_e_primeiro_paragrafo:
+                saida.append("")
         saida.append(linha)
     return "\n".join(saida)
 
@@ -926,6 +1056,18 @@ def _looks_like_heading(text: str) -> bool:
     return uppercase_ratio >= 0.65
 
 
+def _is_heading_line(line: str) -> bool:
+    """Título ou subtítulo: tem negrito, não é bullet e está em CAIXA ALTA."""
+    sem_tags = CUSTOM_EMOJI_MARKER_PATTERN.sub('', html.unescape(_strip_html_tags(line))).strip()
+    return '<b>' in line.lower() and not sem_tags.startswith('-') and _looks_like_heading(sem_tags)
+
+
+def _uppercase_bold_segments(line: str) -> str:
+    def _upper(match: re.Match[str]) -> str:
+        return f"<b>{html.escape(html.unescape(match.group(1)).upper(), quote=False)}</b>"
+    return re.sub(r"<b>(.*?)</b>", _upper, line, flags=re.IGNORECASE)
+
+
 def _normalize_heading_line(line: str, *, force: bool = False) -> str | None:
     stripped_line = line.strip()
     match = TITLE_WITH_BOLD_PATTERN.match(stripped_line)
@@ -934,6 +1076,10 @@ def _normalize_heading_line(line: str, *, force: bool = False) -> str | None:
         before = match.group("before")
         title = match.group("title")
         after = match.group("after")
+        # título com mais de um negrito ("[logo] BRASILEIRÃO — [escudo] FLU X [escudo] COXA"):
+        # reconstruir só com o primeiro negrito cortava os times fora
+        if force and re.search(r"<b>", after, re.IGNORECASE):
+            return _uppercase_bold_segments(stripped_line)
         outside_text = _cleanup_title_text(f"{before} {after}")
         title_text = _cleanup_title_text(title)
 
@@ -1619,14 +1765,14 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
 - Siga o orcamento informado junto da transcricao. Ele e limite, nao meta para preencher.
 - Organize a legenda em 2 ou 3 blocos por padrao. Use 4 apenas se o audio trouxer ideias centrais realmente distintas.
 - Use subtitulos funcionais em CAIXA ALTA quando ajudarem a entender os blocos, mas evite cara de slide, apostila ou relatorio.
-- Quando o assunto for um confronto do Campeonato Brasileiro, use como titulo: [[emoji:brasileirao]] <b>BRASILEIRAO 2026</b> — [[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>. Reconheca tambem apelidos de times, como Coxa, Flu, Mengao e Verdao.
-- Quando estiver elencando times em topicos, cada topico deve comecar com o marcador do escudo seguido imediatamente de <b>NOME DO TIME</b> em CAIXA ALTA: [[emoji:time]] <b>TIME</b>.
-- Separe os topicos de time por uma linha em branco, para a legenda respirar no celular.
-- O subtitulo que abre uma lista de times termina em dois-pontos.
-- Nunca use escudo dentro de bullet ou antes de uma simples mencao no corpo. Escudo aparece somente no titulo do confronto ou abrindo um subtitulo dedicado exclusivamente ao time.
+- O locutor sempre anuncia o assunto no comeco do audio. Se ele anuncia a analise de um jogo do Campeonato Brasileiro (ex.: "vamos falar de Fluminense e Coxa", "jogo do Flu contra o Coxa"), o titulo ocupa DUAS linhas, com os dois times do jogo:
+  [[emoji:brasileirao]] <b>BRASILEIRAO 2026</b>
+  [[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>
+  Reconheca tambem apelidos de times, como Coxa, Flu, Mengao e Verdao.
+- Quando um paragrafo ou bullet for sobre um time, comece a frase pelo time ("- O <b>Fluminense</b> briga pelo G4..."). O bot coloca o escudo desse time no lugar do "-"; voce nao escreve escudo no corpo.
 - Nunca use o escudo de um time como decoracao generica nem associe um escudo ao adversario errado.
 - Use emojis com parcimonia: 1 no titulo e no maximo 1 ou 2 em subtitulos realmente importantes. Em ambos, o emoji vem antes do <b>.
-- Nunca comece bullets com emoji ou escudo. Bullet usa apenas "-"; o destaque visual fica no <b>, <i> e na frase.
+- Nunca comece bullets com emoji. Bullet usa apenas "-"; o destaque visual fica no <b>, <i> e na frase.
 - Prefira 3 a 5 bullets no total. Em audio longo, pode chegar ao limite informado se isso evitar amputar ideias.
 - Cada bullet precisa ter verbo e contexto minimo para fazer sentido sozinho.
 - Cada bullet deve caber em uma frase principal. So use uma segunda oracao curta se sem ela a ideia ficar manca.
@@ -1672,7 +1818,7 @@ Antes de responder, verifique em silencio:
 5. O titulo esta obvio e fiel ao que o locutor introduziu.
 6. Os subtitulos ajudam a leitura.
 7. Os emojis sao poucos, combinam com o assunto e nao aparecem no inicio dos bullets.
-8. Confrontos e topicos de times usam os escudos corretos, seguidos dos nomes em negrito e CAIXA ALTA.
+8. Se o audio analisa um jogo, o titulo traz os dois times do jogo, em duas linhas.
 </checklist_interno>
 """
 
@@ -1705,9 +1851,8 @@ Regras:
 - Preserve nomes de jogadores, tecnicos e times exatamente como aparecem.
 - Preserve ou recoloque 1 emoji no titulo e no maximo 1 ou 2 emojis em subtitulos quando isso ajudar a leitura.
 - Preserve literalmente marcadores no formato [[emoji:papel]] que ja estiverem na legenda.
-- Preserve confrontos no formato [[emoji:brasileirao]] <b>BRASILEIRAO 2026</b> — [[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>.
-- Preserve topicos de times no formato [[emoji:time]] <b>TIME</b>, com nome em negrito e CAIXA ALTA.
-- Remova escudos de bullets e de mencoes comuns no corpo; eles pertencem apenas ao titulo do confronto ou a subtitulos dedicados ao time.
+- Preserve o titulo de confronto em duas linhas ([[emoji:brasileirao]] <b>BRASILEIRAO 2026</b> e, na linha de baixo, [[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>).
+- Quando um bullet for sobre um time, mantenha a frase comecando pelo time.
 - O emoji de titulo e subtitulo deve vir antes do <b>, nunca depois do texto.
 - Nunca comece bullets com emoji. Bullet usa apenas "-".
 - Siga o orcamento informado pelo usuario. Fique abaixo do limite superior, mas nao esprema a ponto de perder ideias centrais.
@@ -2150,14 +2295,17 @@ async def process_audio_message(update: Update, context: ContextTypes.DEFAULT_TY
             )
         logger.info(f"Legenda sem wrappers de markdown ({len(legend)} chars)")
         legend = sanitize_telegram_html(legend)
+        # o confronto é lido antes de mexer no título, enquanto os times ainda estão nele
+        matchup = detect_matchup(legend, corrected_transcript)
         legend = force_main_title_uppercase(legend)
-        legend = ensure_matchup_title(legend, corrected_transcript)
+        legend = ensure_matchup_title(legend, matchup)
         legend = reduce_excess_line_emojis(legend)
         legend = apply_contextual_custom_emoji_roles(legend)
         legend = apply_club_shields(legend)
+        legend = apply_paragraph_shields(legend)
         legend = apply_custom_emojis(legend)
         legend = cleanup_emoji_markers(legend)
-        legend = space_team_topics(legend)
+        legend = apply_breathing_room(legend)
         if not _strip_html_tags(legend).strip():
             raise UserFacingError(
                 "❌ A legenda ficou vazia após o processamento. Tente enviar o áudio novamente."
