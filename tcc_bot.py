@@ -377,8 +377,7 @@ def get_custom_emoji_instruction() -> str:
         "  [[emoji:brasileirao]] <b>BRASILEIRAO 2026</b>\n"
         "  [[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>\n"
         "- Fora do titulo do confronto, NAO escreva marcador de escudo de time: o bot coloca o "
-        "escudo sozinho no comeco do paragrafo cujo assunto e aquele time. Para isso, quando o "
-        "paragrafo for sobre um time, comece a frase pelo time (\"- O <b>Fluminense</b> ...\").\n"
+        "escudo sozinho, de forma pontual.\n"
         "- Fora isso, no maximo 1 emoji por bloco: a legenda nao pode virar carnaval de icones.\n"
         "- Se nenhum papel servir, escreva um emoji comum adequado ao assunto.\n"
         f"- Papeis de time: {', '.join(times)}.\n"
@@ -741,13 +740,18 @@ def _paragraph_subject_team(texto: str) -> str | None:
 
 
 def apply_paragraph_shields(text: str) -> str:
-    """O escudo vira o marcador do parágrafo cujo assunto é um time, no lugar do "-"."""
+    """O escudo vira o marcador do parágrafo cujo assunto é um time, no lugar do "-".
+
+    Pontual: cada time ganha o escudo uma única vez no corpo, no primeiro parágrafo em que
+    é o assunto. Os parágrafos seguintes sobre o mesmo time ficam com o "-".
+    """
     if not text:
         return text
 
     with custom_emoji_lock:
         cadastrados = set(custom_emoji_map)
 
+    ja_usados: set[str] = set()
     linhas = []
     for linha in text.splitlines():
         if not linha.strip() or _is_heading_line(linha):
@@ -756,9 +760,10 @@ def apply_paragraph_shields(text: str) -> str:
         indentacao = linha[:len(linha) - len(linha.lstrip())]
         corpo = re.sub(r'^\s*-\s*', '', linha)
         role = _paragraph_subject_team(corpo)
-        if not role or role not in cadastrados:
+        if not role or role not in cadastrados or role in ja_usados:
             linhas.append(linha)
             continue
+        ja_usados.add(role)
         linhas.append(f"{indentacao}[[emoji:{role}]] {corpo}")
     return "\n".join(linhas)
 
@@ -1769,7 +1774,7 @@ Transforme a fala em uma legenda curta, fiel, humana e facil de escanear no celu
   [[emoji:brasileirao]] <b>BRASILEIRAO 2026</b>
   [[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>
   Reconheca tambem apelidos de times, como Coxa, Flu, Mengao e Verdao.
-- Quando um paragrafo ou bullet for sobre um time, comece a frase pelo time ("- O <b>Fluminense</b> briga pelo G4..."). O bot coloca o escudo desse time no lugar do "-"; voce nao escreve escudo no corpo.
+- Na leitura de um confronto, e natural abrir o paragrafo dedicado a cada time pelo nome dele ("- O <b>Fluminense</b> briga pelo G4..."). Fora isso, escreva de forma natural: nao repita o nome do time no comeco de toda frase e nao force frases a comecarem por um time. Voce nao escreve escudo no corpo; o bot cuida disso.
 - Nunca use o escudo de um time como decoracao generica nem associe um escudo ao adversario errado.
 - Use emojis com parcimonia: 1 no titulo e no maximo 1 ou 2 em subtitulos realmente importantes. Em ambos, o emoji vem antes do <b>.
 - Nunca comece bullets com emoji. Bullet usa apenas "-"; o destaque visual fica no <b>, <i> e na frase.
@@ -1851,9 +1856,7 @@ Regras:
 - Preserve nomes de jogadores, tecnicos e times exatamente como aparecem.
 - Preserve ou recoloque 1 emoji no titulo e no maximo 1 ou 2 emojis em subtitulos quando isso ajudar a leitura.
 - Preserve literalmente marcadores no formato [[emoji:papel]] que ja estiverem na legenda.
-- Preserve o titulo de confronto em duas linhas ([[emoji:brasileirao]] <b>BRASILEIRAO 2026</b> e, na linha de baixo, [[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>).
-- Quando um bullet for sobre um time, mantenha a frase comecando pelo time.
-- O emoji de titulo e subtitulo deve vir antes do <b>, nunca depois do texto.
+- Preserve o titulo de confronto em duas linhas ([[emoji:brasileirao]] <b>BRASILEIRAO 2026</b> e, na linha de baixo, [[emoji:time-1]] <b>TIME 1</b> X [[emoji:time-2]] <b>TIME 2</b>).- O emoji de titulo e subtitulo deve vir antes do <b>, nunca depois do texto.
 - Nunca comece bullets com emoji. Bullet usa apenas "-".
 - Siga o orcamento informado pelo usuario. Fique abaixo do limite superior, mas nao esprema a ponto de perder ideias centrais.
 - Mantenha 2 ou 3 blocos por padrao. Use 4 apenas se for indispensavel para nao cortar uma ideia central.
