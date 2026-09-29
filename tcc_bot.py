@@ -25,6 +25,8 @@ from telegram import Message, Update
 from telegram.error import TimedOut
 from telegram.ext import Application, MessageHandler, CommandHandler, filters, ContextTypes
 
+from indice_bot import start_index_bot
+
 load_dotenv()
 
 logging.basicConfig(
@@ -38,6 +40,7 @@ logging.getLogger("httpx").setLevel(logging.WARNING)
 TELEGRAM_BOT_TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 OPENAI_API_KEY = os.getenv('OPENAI_API_KEY')
 ALLOWED_USER_ID = int(os.getenv('ALLOWED_USER_ID', '0'))
+INDEX_BOT_TOKEN = os.getenv('INDEX_BOT_TOKEN', '').strip()
 PORT = int(os.getenv('PORT', '10000'))
 LEGACY_OPENAI_TEXT_MODEL = os.getenv('OPENAI_TEXT_MODEL')
 OPENAI_TRANSCRIPTION_MODEL = os.getenv('OPENAI_TRANSCRIPTION_MODEL', 'gpt-transcribe')
@@ -2388,6 +2391,14 @@ async def run_bot():
     await app.start()
     await app.updater.start_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
     logger.info("Bot rodando... aguardando mensagens.")
+
+    # robô do índice do canal: opcional, e uma falha nele não derruba o de legendas
+    if INDEX_BOT_TOKEN:
+        try:
+            await start_index_bot(INDEX_BOT_TOKEN, ALLOWED_USER_ID)
+        except Exception:
+            logger.exception("Robô do índice não iniciou; o robô de legendas segue normalmente.")
+
     await asyncio.Event().wait()
 
 
