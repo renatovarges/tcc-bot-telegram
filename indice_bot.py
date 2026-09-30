@@ -42,7 +42,7 @@ HELP_TEXT = (
     "<b>Comandos:</b>\n"
     "/nova_rodada 28 — zera a lista e começa a rodada 28\n"
     "/indice — mostra como está o índice, com a numeração dos itens\n"
-    "/publicar — posta o índice atualizado no canal\n"
+    "/publicar — posta e fixa o índice atualizado no canal (desafixa o anterior)\n"
     "/adicionar LINK NOME — inclui um post pelo link\n"
     "/remover 3 — tira o item 3\n"
     "/renomear 3 NOVO NOME — troca o nome do item 3\n"
@@ -66,6 +66,8 @@ class IndexState:
     items: dict[int, IndexItem] = field(default_factory=dict)
     youtube_emoji_id: str | None = None
     youtube_emoji_fallback: str = "▶️"
+    # último índice fixado pelo robô: é desafixado quando sai o próximo
+    last_index_message_id: int | None = None
     memory_message_id: int | None = None
 
     def sorted_items(self) -> list[IndexItem]:
@@ -149,6 +151,7 @@ def render_memory(state: IndexState) -> str:
         f"rodada: {state.rodada}",
         f"canal: {state.channel_id or ''} {state.channel_username or '-'}",
         f"youtube: {state.youtube_emoji_id or '-'} {state.youtube_emoji_fallback}",
+        f"ultimo_indice: {state.last_index_message_id or '-'}",
         "---",
     ]
     for item in state.sorted_items():
@@ -167,6 +170,10 @@ def parse_memory(text: str) -> IndexState:
                 state.channel_id = int(parts[0])
             if len(parts) > 1 and parts[1] != '-':
                 state.channel_username = parts[1]
+        elif line.startswith('ultimo_indice:'):
+            value = line.split(':', 1)[1].strip()
+            if value.isdigit():
+                state.last_index_message_id = int(value)
         elif line.startswith('youtube:'):
             parts = line.split(':', 1)[1].split()
             if parts and parts[0].isdigit():
@@ -342,6 +349,29 @@ async def cmd_emoji_youtube(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         f'✅ Emoji do YouTube cadastrado: {youtube_marker(state)} — ele marca os itens com link do YouTube.')
 
 
+async def _pin_new_index(context: ContextTypes.DEFAULT_TYPE, state: IndexState, message_id: int) -> str:
+    """Fixa o índice recém-publicado e desafixa o anterior. Devolve um aviso se não conseguir."""
+    try:
+        # o post do índice já notifica a audiência; fixar não precisa notificar de novo
+        await context.bot.pin_chat_message(state.channel_id, message_id, disable_notification=True)
+    except TelegramError as exc:
+        logger.warning("Índice: não consegui fixar o índice no canal: %s", exc)
+        return ("\n\n📌 Não consegui fixar o índice. Para o robô fixar sozinho, dê a ele a permissão "
+                "<b>Editar mensagens de outros</b> em Administradores do canal.")
+
+    anterior, state.last_index_message_id = state.last_index_message_id, message_id
+    if anterior and anterior != message_id:
+        try:
+            await context.bot.unpin_chat_message(state.channel_id, message_id=anterior)
+        except TelegramError as exc:
+            logger.warning("Índice: não consegui desafixar o índice anterior: %s", exc)
+    try:
+        await save_state(context.bot, _owner(context), state)
+    except (TelegramError, ValueError) as exc:
+        logger.error("Índice: falha ao salvar a memória: %s", exc)
+    return ""
+
+
 async def cmd_publicar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     state = _state(context)
     if not state.items:
@@ -371,9 +401,11 @@ async def cmd_publicar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
             "Confira se o robô é administrador do canal com permissão para publicar.")
         return
 
+    aviso += await _pin_new_index(context, state, published.message_id)
+    fixado = " e fixado" if state.last_index_message_id == published.message_id else ""
     link = html.escape(post_link(state, published.message_id))
     await update.effective_message.reply_text(
-        f'✅ <a href="{link}">Índice publicado</a> no canal com {len(state.items)} itens.{aviso}',
+        f'✅ <a href="{link}">Índice publicado</a>{fixado} no canal com {len(state.items)} itens.{aviso}',
         parse_mode=ParseMode.HTML,
         link_preview_options=LinkPreviewOptions(is_disabled=True),
     )
