@@ -46,7 +46,7 @@ HELP_TEXT = (
     "/adicionar LINK NOME — inclui um post pelo link\n"
     "/remover 3 — tira o item 3\n"
     "/renomear 3 NOVO NOME — troca o nome do item 3\n"
-    "/emoji_youtube [emoji] — cadastra o emoji premium do YouTube\n\n"
+    "/emoji_youtube [emoji] — troca o emoji dos itens do YouTube (premium ou comum)\n\n"
     "Post com link do YouTube (ou nome começando com ▶️) ganha o ícone do YouTube no índice."
 )
 
@@ -125,7 +125,8 @@ def youtube_marker(state: IndexState, *, premium: bool = True) -> str:
     if premium and state.youtube_emoji_id:
         return (f'<tg-emoji emoji-id="{state.youtube_emoji_id}">'
                 f'{html.escape(state.youtube_emoji_fallback)}</tg-emoji>')
-    return "▶️"
+    # emoji comum escolhido pelo dono, ou o equivalente comum do premium recusado
+    return html.escape(state.youtube_emoji_fallback or "▶️")
 
 
 def render_index(state: IndexState, *, numbered: bool = False, premium: bool = True) -> str:
@@ -320,18 +321,22 @@ async def _send_index(context: ContextTypes.DEFAULT_TYPE, state: IndexState, *, 
 
 
 async def cmd_emoji_youtube(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Cadastra o emoji premium do YouTube: o comando vem junto com o emoji na mesma mensagem."""
+    """Troca o emoji dos itens do YouTube. O comando vem junto com o emoji, premium ou comum."""
     message = update.effective_message
-    emojis = message.parse_entities([MessageEntity.CUSTOM_EMOJI])
-    if not emojis:
-        await message.reply_text(
-            "Mande o comando junto com o emoji premium do YouTube, na mesma mensagem:\n"
-            "/emoji_youtube [emoji]")
-        return
-    entity, fallback = next(iter(emojis.items()))
     state = _state(context)
-    state.youtube_emoji_id = entity.custom_emoji_id
-    state.youtube_emoji_fallback = fallback or "▶️"
+    emojis = message.parse_entities([MessageEntity.CUSTOM_EMOJI])
+    if emojis:
+        entity, fallback = next(iter(emojis.items()))
+        state.youtube_emoji_id = entity.custom_emoji_id
+        state.youtube_emoji_fallback = fallback or "▶️"
+    elif context.args:
+        state.youtube_emoji_id = None
+        state.youtube_emoji_fallback = context.args[0]
+    else:
+        await message.reply_text(
+            "Mande o comando junto com o emoji, na mesma mensagem (premium ou comum):\n"
+            "/emoji_youtube 🔴")
+        return
     await _save_and_report(
         context,
         f'✅ Emoji do YouTube cadastrado: {youtube_marker(state)} — ele marca os itens com link do YouTube.')
@@ -354,10 +359,11 @@ async def cmd_publicar(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         except BadRequest as exc:
             if not state.youtube_emoji_id:
                 raise
-            # o Telegram pode não deixar robô usar emoji premium no canal: publica com ▶️
-            logger.warning("Índice: emoji premium recusado no canal, usando ▶️: %s", exc)
+            # o Telegram pode não deixar robô usar emoji premium no canal: publica com o comum
+            logger.warning("Índice: emoji premium recusado no canal, usando o comum: %s", exc)
             published = await _send_index(context, state, premium=False)
-            aviso = "\n\n⚠️ O Telegram não deixou o robô usar o emoji premium do YouTube no canal; saiu ▶️."
+            aviso = ("\n\n⚠️ O Telegram não deixou o robô usar o emoji premium do YouTube no canal; "
+                     f"saiu {youtube_marker(state, premium=False)} no lugar.")
     except TelegramError as exc:
         logger.error("Índice: falha ao publicar no canal: %s", exc)
         await update.effective_message.reply_text(
