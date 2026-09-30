@@ -2390,10 +2390,14 @@ async def run_bot():
     await app.initialize()
     await app.start()
     await app.updater.start_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
-    logger.info("Bot rodando... aguardando mensagens.")
+    logger.info("Robô de legendas rodando como @%s... aguardando mensagens.", app.bot.username)
 
     # robô do índice do canal: opcional, e uma falha nele não derruba o de legendas
-    if INDEX_BOT_TOKEN:
+    if INDEX_BOT_TOKEN and INDEX_BOT_TOKEN == TELEGRAM_BOT_TOKEN.strip():
+        # o mesmo token em dois robôs gera "Conflict" e derruba os dois
+        logger.error("Robô do índice desligado: INDEX_BOT_TOKEN é igual ao TELEGRAM_BOT_TOKEN. "
+                     "Use o token do robô novo criado no BotFather.")
+    elif INDEX_BOT_TOKEN:
         logger.info("Iniciando robô do índice...")
         try:
             await start_index_bot(INDEX_BOT_TOKEN, ALLOWED_USER_ID)

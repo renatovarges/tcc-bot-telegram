@@ -474,6 +474,7 @@ async def start_index_bot(token: str, owner_id: int) -> Application:
     app.add_handler(CommandHandler("emoji_youtube", cmd_emoji_youtube, filters=dono))
 
     await app.initialize()
+    logger.info("Robô do índice conectado como @%s.", app.bot.username)
     app.bot_data['owner_id'] = owner_id
     app.bot_data['index_state'] = await load_state(app.bot, owner_id)
     await app.start()
