@@ -2394,10 +2394,13 @@ async def run_bot():
 
     # robô do índice do canal: opcional, e uma falha nele não derruba o de legendas
     if INDEX_BOT_TOKEN:
+        logger.info("Iniciando robô do índice...")
         try:
             await start_index_bot(INDEX_BOT_TOKEN, ALLOWED_USER_ID)
         except Exception:
             logger.exception("Robô do índice não iniciou; o robô de legendas segue normalmente.")
+    else:
+        logger.info("Robô do índice desligado: variável INDEX_BOT_TOKEN vazia ou ausente.")
 
     await asyncio.Event().wait()
 
